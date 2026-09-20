@@ -1,107 +1,25 @@
-# Memory Management — reference patterns
+# Memory Management — patterns (Ch 8)
 
-Source: Chapter 8 + `Chapter_08_Memory_(ADK_SessionService)`, `(ADK_LlmAgent_output_key)`,
-`(ADK_Explicit_State_Update)`, `(ADK_MemoryService_InMemory)`, `(LangChain_LangGraph)`.
+## Pattern
+1. Short-term: session state and history per session id.
+2. Write state via `output_key` or `tool_context.state`, never by mutation.
+3. Long-term: add finished sessions to a memory service; search on demand.
+4. Summarise or window history before it overflows.
 
-## Model (book)
-- Short-term / contextual: recent interaction data inside the context window
-  (session history + state).
-- Long-term: external stores (vector DBs, key-value) searched semantically.
-- ADK concepts: `Session` (thread of events), `State` (temporary dict for the
-  session), `MemoryService` (searchable long-term store).
-- Memory types: semantic (facts), episodic (experiences), procedural (rules/instructions).
-
-## ADK session services
-```python
-from google.adk.sessions import InMemorySessionService, DatabaseSessionService, VertexAiSessionService
-session_service = InMemorySessionService()                                   # dev/test, lost on restart
-session_service = DatabaseSessionService(db_url="sqlite:///./my_agent_data.db")  # persistent
-session_service = VertexAiSessionService(project=PROJECT_ID, location=LOCATION)  # managed; app_name = reasoning engine resource
+## Prompt template
+```
+Use the user's stored preferences: {user:pref}. Last result: {last_result}.
+Before answering, search memory for prior facts about this user and cite them.
 ```
 
-## State update patterns (ADK)
-Rule: never mutate `session.state` directly; changes must flow through events.
+## Key APIs
+- ADK: `InMemorySessionService`, `DatabaseSessionService`, `VertexAiSessionService`; `Runner(memory_service=...)`.
+- ADK: `LlmAgent(output_key='k')`, `tool_context.state['user:pref']`, `memory.search_memory(query)`.
+- LangChain: `ConversationBufferMemory`; LangGraph `InMemoryStore` for procedural memory.
 
-1. `output_key` on an agent:
-```python
-greeting_agent = LlmAgent(name="Greeter", model="gemini-2.0-flash",
-    instruction="Generate a short, friendly greeting.", output_key="last_greeting")
-# after runner.run(...): session_service.get_session(app, user, sid).state["last_greeting"]
-```
-2. Inside a tool via `ToolContext` (recommended for multi-key updates):
-```python
-def log_user_login(tool_context: ToolContext) -> dict:
-    state = tool_context.state
-    login_count = state.get("user:login_count", 0) + 1
-    state["user:login_count"] = login_count
-    state["task_status"] = "active"
-    state["user:last_login_ts"] = time.time()
-    state["temp:validation_needed"] = True
-    return {"status": "success", "message": f"User login tracked. Total logins: {login_count}."}
-```
-3. Explicit `EventActions.state_delta` when appending events manually.
+## Pitfalls -> fixes
+- Direct state mutation -> use `EventActions(state_delta=...)`.
+- Context overflow -> summary memory or windowing.
+- Lost on restart -> database or Vertex services.
 
-State key prefixes: `user:` persists per user across sessions, `app:` shared
-app-wide, `temp:` discarded after the invocation, no prefix = session scope.
-
-## ADK long-term memory
-```python
-from google.adk.memory import InMemoryMemoryService, VertexAiRagMemoryService
-memory_service = InMemoryMemoryService()
-memory_service = VertexAiRagMemoryService(
-    rag_corpus="projects/<proj>/locations/us-central1/ragCorpora/<corpus>",
-    similarity_top_k=5, vector_distance_threshold=0.7)
-# memory_service.add_session_to_memory(session); memory_service.search_memory(...)
-```
-Memory Bank (managed) extracts and recalls user facts automatically across
-ADK, LangGraph and CrewAI.
-
-## LangChain short-term memory
-```python
-from langchain.memory import ChatMessageHistory, ConversationBufferMemory
-history = ChatMessageHistory(); history.add_user_message("I'm heading to New York next week.")
-
-memory = ConversationBufferMemory(memory_key="history")          # string history for completion LLMs
-template = """You are a helpful travel agent.
-Previous conversation:
-{history}
-New question: {question}
-Response:"""
-conversation = LLMChain(llm=OpenAI(temperature=0), prompt=PromptTemplate.from_template(template), memory=memory)
-
-# chat models: return_messages=True + MessagesPlaceholder
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-prompt = ChatPromptTemplate(messages=[
-    SystemMessagePromptTemplate.from_template("You are a friendly assistant."),
-    MessagesPlaceholder(variable_name="chat_history"),
-    HumanMessagePromptTemplate.from_template("{question}")])
-```
-
-## LangGraph long-term store
-```python
-from langgraph.store.memory import InMemoryStore
-store = InMemoryStore(index={"embed": embed, "dims": 2})       # production: DB-backed store
-namespace = (user_id, "chitchat")
-store.put(namespace, "a-memory", {"rules": ["User likes short, direct language",
-                                            "User only speaks English & python"], "my-key": "my-value"})
-item = store.get(namespace, "a-memory")
-items = store.search(namespace, filter={"my-key": "my-value"}, query="language preferences")
-```
-Procedural memory (self-updating instructions):
-```python
-def update_instructions(state, store):
-    current = store.search(("instructions",))[0]
-    new = llm.invoke(prompt_template.format(instructions=current.value["instructions"],
-                                            conversation=state["messages"]))["new_instructions"]
-    store.put(("agent_instructions",), "agent_a", {"instructions": new})
-
-def call_model(state, store):
-    instructions = store.get(("agent_instructions",), key="agent_a")[0]
-    prompt = prompt_template.format(instructions=instructions.value["instructions"])
-```
-
-## Checklist
-- Decide scope per key (`user:`/`app:`/`temp:`) before writing.
-- Summarise or window history before the context fills.
-- Use a persistent session service outside notebooks.
-- Search long-term memory with a query, then inject only the hits.
+Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_08_*`.

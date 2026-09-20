@@ -1,110 +1,25 @@
-# Exploration and Discovery — reference patterns
+# Exploration and Discovery — patterns (Ch 21)
 
-Source: Chapter 21 + `Chapter_21_Exploration_Discovery_(Agent_Laboratory).ipynb`
-(excerpts from github.com/SamuelSchmidgall/AgentLaboratory).
+## Pattern
+1. Generate many hypotheses for a goal.
+2. Review each with several personas.
+3. Rank; evolve the top candidates.
+4. Stop after N rounds or no improvement.
 
-## Rule of thumb (book)
-Use in open-ended, complex or rapidly evolving domains where the solution
-space is not fully defined: scientific research, market analysis, security
-vulnerability discovery, creative generation, personalised education. The
-goal is to surface "unknown unknowns", not optimise a known process.
-
-## Google Co-Scientist architecture (book)
-Supervisor coordinates asynchronous specialised agents:
-- **Generation**: initial hypotheses via literature exploration and simulated debate.
-- **Reflection**: peer-review for correctness, novelty, quality.
-- **Ranking**: Elo-based tournament through simulated scientific debates.
-- **Evolution**: refine top hypotheses (simplify, synthesise, unconventional reasoning).
-- **Proximity**: cluster similar ideas (proximity graph) to map the landscape.
-- **Meta-review**: synthesise insights across reviews; feed back to the loop.
-Validated in drug repurposing (AML), liver-fibrosis targets and bacterial
-gene-transfer mechanisms, with human scientists confirming hypotheses.
-
-## Agent Laboratory roles (notebook)
-Phases: literature review -> plan formulation -> data preparation ->
-experimentation -> results interpretation -> report writing -> review.
-Roles: PhD student, Postdoc, ML engineer, Software engineer, Professor,
-Reviewers. Agents talk through dialogue; one directs, one executes.
-
-### Reviewer ensemble with distinct personas
-```python
-class ReviewersAgent:
-    def inference(self, plan, report):
-        reviewer_1 = "You are a harsh but fair reviewer and expect good experiments that lead to insights for the research topic."
-        reviewer_2 = "You are a harsh and critical but fair reviewer who is looking for an idea that would be impactful in the field."
-        reviewer_3 = "You are a harsh but fair open-minded reviewer that is looking for novel ideas that have not been proposed before."
-        return "\n".join(f"Reviewer #{i}:\n{get_score(outlined_plan=plan, latex=report, reward_model_llm=self.model, reviewer_type=r)}"
-                         for i, r in enumerate([reviewer_1, reviewer_2, reviewer_3], 1))
+## Prompt template
 ```
-### Structured review template (from Sakana AI Scientist)
-```
-Respond in the following format:
-
-THOUGHT:
-<THOUGHT>
-
-REVIEW JSON:
-```json
-<JSON>
+Proposer: Propose a novel, testable hypothesis for {goal}. State mechanism and a test.
+Reviewer ({persona}): Score novelty, feasibility, impact 1-5 with one sentence each.
 ```
 
-In <THOUGHT>, first briefly discuss your intuitions and reasoning for the evaluation. Be specific to the paper.
-In <JSON>, provide the review with fields in order:
-- "Summary", "Strengths" (list), "Weaknesses" (list)
-- "Originality", "Quality", "Clarity", "Significance": 1-4 (low..very high)
-- "Questions" (for authors), "Limitations" (incl. societal impact), "Ethical Concerns" (bool)
-- "Soundness", "Presentation", "Contribution": 1-4 (poor..excellent)
-- "Overall": 1-10 (very strong reject .. award quality)
-- "Confidence": 1-5
-- "Decision": "Accept" or "Reject" only.
-This JSON will be automatically parsed, so ensure the format is precise.
-```
-`get_score` retries parsing up to `attempts=3`.
+## Key APIs
+- Google Co-Scientist: generate -> reflect -> rank -> evolve loop.
+- Agent Laboratory: PhD/Postdoc/Professor roles across literature, experiments, writing.
+- Structured review: JSON scores per persona; aggregate for ranking.
 
-### Role prompts (director / executor pairs)
-```
-"You are a machine learning engineer being directed by a PhD student who will help you write the code,
-and you can interact with them through dialogue. Your goal is to produce code that prepares the data for
-the provided experiment. You should aim for simple code to prepare the data, not complex code..."
+## Pitfalls -> fixes
+- Groupthink -> diverse personas, blind reviews.
+- Unbounded rounds -> round cap.
+- Novel but infeasible -> weight feasibility.
 
-"You are a software engineer directing a machine learning engineer, where the machine learning engineer
-will be writing the code, and you can interact with them through dialogue. Your goal is to help the ML
-engineer produce code that prepares the data for the provided experiment..."
-```
-### Phase-scoped context (PostdocAgent)
-```python
-def context(self, phase):
-    sr_str = (f"Previous Experiment code: {self.prev_results_code}\nPrevious Results: {self.prev_exp_results}\n"
-              f"Previous Interpretation of results: {self.prev_interpretation}\nPrevious Report: {self.prev_report}\n"
-              f"{self.reviewer_response}\n") if self.second_round else ""
-    if phase == "plan formulation":
-        return sr_str, f"Current Literature Review: {self.lit_review_sum}"
-    if phase == "results interpretation":
-        return sr_str, (f"Current Literature Review: {self.lit_review_sum}\nCurrent Plan: {self.plan}\n"
-                        f"Current Dataset code: {self.dataset_code}\nCurrent Experiment code: {self.results_code}\n"
-                        f"Current Results: {self.exp_results}")
-```
-Each agent receives only the artifacts relevant to its phase; second rounds
-prepend prior results and reviewer feedback.
-
-### Professor: final artifact
-```python
-sys_prompt = f"You are {self.role_description()} \n Here is the written paper \n{self.report}. Task instructions: Your goal is to integrate all of the knowledge, code, reports, and notes provided to you and generate a readme.md for a github repository."
-```
-
-## Generic discovery loop
-```
-hypotheses = generate(question, k)
-loop rounds:
-    reviews  = [review(h, persona) for h in hypotheses for persona in personas]
-    ranked   = tournament(hypotheses, reviews)          # Elo / pairwise debate
-    hypotheses = evolve(top(ranked, m)) + explore(new)  # exploit + explore
-    if converged or budget spent: break
-report(top(ranked))
-```
-
-## Checklist
-- Diverse reviewer personas and models; check for groupthink.
-- Separate "novel" from "correct" scores; both required to advance.
-- Hard round/budget caps; log every hypothesis lineage.
-- Safety/ethics gate before any experiment executes (`guardrails`, `human-in-the-loop`).
+Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_21_*`.
