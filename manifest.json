@@ -1,0 +1,579 @@
+{
+  "version": "1.0",
+  "source": "Agentic Design Patterns (Gulli)",
+  "skills": [
+    {
+      "id": "prompt-chaining",
+      "name": "Prompt Chaining",
+      "chapter": 1,
+      "role": [
+        "executor"
+      ],
+      "when_to_use": "Sequential stages where each output feeds the next.",
+      "when_not_to_use": "Independent parallelizable tasks.",
+      "inputs": [
+        "ordered stages",
+        "stage prompts"
+      ],
+      "outputs": [
+        "stage outputs",
+        "final result"
+      ],
+      "failure_modes": [
+        "errors compound without gates",
+        "chains over 5 stages drift"
+      ],
+      "chains_with": [
+        "routing",
+        "tool-use"
+      ],
+      "token_cost_estimate": 217
+    },
+    {
+      "id": "routing",
+      "name": "Routing",
+      "chapter": 2,
+      "role": [
+        "planner",
+        "executor"
+      ],
+      "when_to_use": "Requests split into types needing different handlers.",
+      "when_not_to_use": "One handler covers everything.",
+      "inputs": [
+        "router prompt",
+        "handler registry"
+      ],
+      "outputs": [
+        "chosen route",
+        "handler output"
+      ],
+      "failure_modes": [
+        "misclassification misroutes work",
+        "route explosion"
+      ],
+      "chains_with": [
+        "prompt-chaining",
+        "tool-use"
+      ],
+      "token_cost_estimate": 194
+    },
+    {
+      "id": "parallelization",
+      "name": "Parallelization",
+      "chapter": 3,
+      "role": [
+        "executor"
+      ],
+      "when_to_use": "Independent subtasks run concurrently, then merge.",
+      "when_not_to_use": "Subtasks depend on each other.",
+      "inputs": [
+        "subtask list",
+        "merge prompt"
+      ],
+      "outputs": [
+        "branch results",
+        "merged answer"
+      ],
+      "failure_modes": [
+        "hidden dependencies corrupt merge",
+        "stragglers block join"
+      ],
+      "chains_with": [
+        "prompt-chaining",
+        "multi-agent"
+      ],
+      "token_cost_estimate": 185
+    },
+    {
+      "id": "reflection",
+      "name": "Reflection",
+      "chapter": 4,
+      "role": [
+        "critic"
+      ],
+      "when_to_use": "Draft quality improves via critique-revise loops.",
+      "when_not_to_use": "Latency-critical single-shot answers.",
+      "inputs": [
+        "draft",
+        "quality criteria"
+      ],
+      "outputs": [
+        "revised output",
+        "critique trace"
+      ],
+      "failure_modes": [
+        "critic shares generator blind spots",
+        "loops oscillate"
+      ],
+      "chains_with": [
+        "reasoning-techniques",
+        "evaluation-monitoring"
+      ],
+      "token_cost_estimate": 196
+    },
+    {
+      "id": "tool-use",
+      "name": "Tool Use",
+      "chapter": 5,
+      "role": [
+        "executor"
+      ],
+      "when_to_use": "Model must act via search, code, or APIs.",
+      "when_not_to_use": "Answer is fully in model knowledge.",
+      "inputs": [
+        "tool schemas",
+        "task + call budget"
+      ],
+      "outputs": [
+        "tool calls",
+        "grounded result"
+      ],
+      "failure_modes": [
+        "wrong tool or bad args",
+        "untrusted output poisons reasoning"
+      ],
+      "chains_with": [
+        "routing",
+        "exception-handling"
+      ],
+      "token_cost_estimate": 194
+    },
+    {
+      "id": "planning",
+      "name": "Planning",
+      "chapter": 6,
+      "role": [
+        "planner"
+      ],
+      "when_to_use": "Goal needs decomposing into an ordered plan.",
+      "when_not_to_use": "Single-step reactive tasks.",
+      "inputs": [
+        "goal + constraints",
+        "available actions"
+      ],
+      "outputs": [
+        "stepwise plan",
+        "execution trace"
+      ],
+      "failure_modes": [
+        "unexecutable plans",
+        "stale plans"
+      ],
+      "chains_with": [
+        "goal-setting",
+        "multi-agent"
+      ],
+      "token_cost_estimate": 185
+    },
+    {
+      "id": "multi-agent",
+      "name": "Multi-Agent Collaboration",
+      "chapter": 7,
+      "role": [
+        "planner",
+        "executor"
+      ],
+      "when_to_use": "Specialists with distinct roles cooperate.",
+      "when_not_to_use": "Single agent with tools suffices.",
+      "inputs": [
+        "role cards",
+        "topology"
+      ],
+      "outputs": [
+        "agent outputs",
+        "coordinated result"
+      ],
+      "failure_modes": [
+        "coordination overhead",
+        "inconsistent shared state"
+      ],
+      "chains_with": [
+        "planning",
+        "parallelization"
+      ],
+      "token_cost_estimate": 183
+    },
+    {
+      "id": "memory-management",
+      "name": "Memory Management",
+      "chapter": 8,
+      "role": [
+        "memory"
+      ],
+      "when_to_use": "State must persist across turns or sessions.",
+      "when_not_to_use": "Stateless single-turn tasks.",
+      "inputs": [
+        "scope (user/session)",
+        "facts to store"
+      ],
+      "outputs": [
+        "session state",
+        "scoped recall"
+      ],
+      "failure_modes": [
+        "stale facts resurface",
+        "unbounded growth"
+      ],
+      "chains_with": [
+        "rag",
+        "learning-adaptation"
+      ],
+      "token_cost_estimate": 173
+    },
+    {
+      "id": "learning-adaptation",
+      "name": "Learning and Adaptation",
+      "chapter": 9,
+      "role": [
+        "memory",
+        "critic"
+      ],
+      "when_to_use": "Behavior must improve from feedback or evolution.",
+      "when_not_to_use": "Fixed audited deterministic behavior.",
+      "inputs": [
+        "initial program",
+        "evaluator signal"
+      ],
+      "outputs": [
+        "improved program",
+        "metric delta"
+      ],
+      "failure_modes": [
+        "overfitting the evaluator",
+        "unsafe drift"
+      ],
+      "chains_with": [
+        "evaluation-monitoring",
+        "reflection"
+      ],
+      "token_cost_estimate": 182
+    },
+    {
+      "id": "mcp",
+      "name": "Model Context Protocol (MCP)",
+      "chapter": 10,
+      "role": [
+        "memory",
+        "executor"
+      ],
+      "when_to_use": "Agents need standardized access via MCP servers.",
+      "when_not_to_use": "One-off local function calls.",
+      "inputs": [
+        "server endpoint",
+        "tool need"
+      ],
+      "outputs": [
+        "connected toolset",
+        "tool result"
+      ],
+      "failure_modes": [
+        "server downtime breaks agent",
+        "over-broad scope"
+      ],
+      "chains_with": [
+        "tool-use",
+        "guardrails"
+      ],
+      "token_cost_estimate": 187
+    },
+    {
+      "id": "goal-setting",
+      "name": "Goal Setting and Monitoring",
+      "chapter": 11,
+      "role": [
+        "planner"
+      ],
+      "when_to_use": "Work tracks measurable goals with iteration.",
+      "when_not_to_use": "Open-ended exploration, no targets.",
+      "inputs": [
+        "goal + done criteria",
+        "baseline"
+      ],
+      "outputs": [
+        "milestones",
+        "progress report"
+      ],
+      "failure_modes": [
+        "vague unmeasurable goals",
+        "no stop condition"
+      ],
+      "chains_with": [
+        "planning",
+        "evaluation-monitoring"
+      ],
+      "token_cost_estimate": 188
+    },
+    {
+      "id": "exception-handling",
+      "name": "Exception Handling and Recovery",
+      "chapter": 12,
+      "role": [
+        "safety"
+      ],
+      "when_to_use": "Tools can fail; fallbacks or retries needed.",
+      "when_not_to_use": "Hiding systematic errors.",
+      "inputs": [
+        "primary path",
+        "fallback chain"
+      ],
+      "outputs": [
+        "recovered result",
+        "error trace"
+      ],
+      "failure_modes": [
+        "silent degraded results",
+        "retry storms"
+      ],
+      "chains_with": [
+        "tool-use",
+        "guardrails"
+      ],
+      "token_cost_estimate": 188
+    },
+    {
+      "id": "human-in-the-loop",
+      "name": "Human-in-the-Loop",
+      "chapter": 13,
+      "role": [
+        "safety"
+      ],
+      "when_to_use": "Irreversible actions need human approval.",
+      "when_not_to_use": "Low-risk reversible steps.",
+      "inputs": [
+        "action proposal",
+        "approver + risk"
+      ],
+      "outputs": [
+        "verdict",
+        "executed/blocked action"
+      ],
+      "failure_modes": [
+        "approval fatigue",
+        "humans block latency"
+      ],
+      "chains_with": [
+        "guardrails",
+        "exception-handling"
+      ],
+      "token_cost_estimate": 166
+    },
+    {
+      "id": "rag",
+      "name": "Knowledge Retrieval (RAG)",
+      "chapter": 14,
+      "role": [
+        "memory"
+      ],
+      "when_to_use": "Answers must ground in external documents.",
+      "when_not_to_use": "Model knowledge suffices.",
+      "inputs": [
+        "corpus handle",
+        "query + top-K"
+      ],
+      "outputs": [
+        "cited chunks",
+        "grounded answer"
+      ],
+      "failure_modes": [
+        "irrelevant chunks mislead",
+        "stale index"
+      ],
+      "chains_with": [
+        "tool-use",
+        "memory-management"
+      ],
+      "token_cost_estimate": 191
+    },
+    {
+      "id": "a2a",
+      "name": "Inter-Agent Communication (A2A)",
+      "chapter": 15,
+      "role": [
+        "executor",
+        "planner"
+      ],
+      "when_to_use": "Independent agents call each other over network.",
+      "when_not_to_use": "Same-process agents.",
+      "inputs": [
+        "agent card",
+        "task envelope"
+      ],
+      "outputs": [
+        "remote result",
+        "session trace"
+      ],
+      "failure_modes": [
+        "schema drift breaks interop",
+        "unauthenticated endpoints"
+      ],
+      "chains_with": [
+        "multi-agent",
+        "mcp"
+      ],
+      "token_cost_estimate": 174
+    },
+    {
+      "id": "resource-optimization",
+      "name": "Resource-Aware Optimization",
+      "chapter": 16,
+      "role": [
+        "planner"
+      ],
+      "when_to_use": "Cost, latency, or tier optimized per request.",
+      "when_not_to_use": "Every call needs best model.",
+      "inputs": [
+        "complexity signal",
+        "tier catalog"
+      ],
+      "outputs": [
+        "tier assignment",
+        "cost report"
+      ],
+      "failure_modes": [
+        "silent downgrade fails hard tasks",
+        "stale cache"
+      ],
+      "chains_with": [
+        "routing",
+        "evaluation-monitoring"
+      ],
+      "token_cost_estimate": 183
+    },
+    {
+      "id": "reasoning-techniques",
+      "name": "Reasoning Techniques",
+      "chapter": 17,
+      "role": [
+        "critic"
+      ],
+      "when_to_use": "Decisions need explicit step-by-step reasoning.",
+      "when_not_to_use": "Simple direct lookups.",
+      "inputs": [
+        "hard question",
+        "strategy"
+      ],
+      "outputs": [
+        "reasoning trace",
+        "verified answer"
+      ],
+      "failure_modes": [
+        "verbose traces hide answers",
+        "research loops spin"
+      ],
+      "chains_with": [
+        "reflection",
+        "tool-use"
+      ],
+      "token_cost_estimate": 183
+    },
+    {
+      "id": "guardrails",
+      "name": "Guardrails and Safety",
+      "chapter": 18,
+      "role": [
+        "safety"
+      ],
+      "when_to_use": "Inputs, tool args, outputs need policy checks.",
+      "when_not_to_use": "Sole safety layer for high-risk acts.",
+      "inputs": [
+        "policy rules",
+        "input/call to check"
+      ],
+      "outputs": [
+        "allow/block verdict",
+        "audit log"
+      ],
+      "failure_modes": [
+        "over-blocking legit use",
+        "naive filters bypassed"
+      ],
+      "chains_with": [
+        "human-in-the-loop",
+        "exception-handling"
+      ],
+      "token_cost_estimate": 183
+    },
+    {
+      "id": "evaluation-monitoring",
+      "name": "Evaluation and Monitoring",
+      "chapter": 19,
+      "role": [
+        "critic"
+      ],
+      "when_to_use": "Agent quality scored and tracked over time.",
+      "when_not_to_use": "One-off demos, no bar.",
+      "inputs": [
+        "outputs",
+        "rubric/ground truth"
+      ],
+      "outputs": [
+        "scores",
+        "regression alerts"
+      ],
+      "failure_modes": [
+        "vanity metrics",
+        "judge bias"
+      ],
+      "chains_with": [
+        "reflection",
+        "learning-adaptation"
+      ],
+      "token_cost_estimate": 195
+    },
+    {
+      "id": "prioritization",
+      "name": "Prioritization",
+      "chapter": 20,
+      "role": [
+        "planner"
+      ],
+      "when_to_use": "Many tasks compete for limited capacity.",
+      "when_not_to_use": "Strict FIFO order.",
+      "inputs": [
+        "backlog",
+        "scoring weights"
+      ],
+      "outputs": [
+        "ranked queue",
+        "top-N list"
+      ],
+      "failure_modes": [
+        "easy-win bias",
+        "stale ranks"
+      ],
+      "chains_with": [
+        "goal-setting",
+        "planning"
+      ],
+      "token_cost_estimate": 176
+    },
+    {
+      "id": "exploration-discovery",
+      "name": "Exploration and Discovery",
+      "chapter": 21,
+      "role": [
+        "planner",
+        "critic"
+      ],
+      "when_to_use": "Agents autonomously explore open questions.",
+      "when_not_to_use": "Fixed known answers.",
+      "inputs": [
+        "research question",
+        "explore budget"
+      ],
+      "outputs": [
+        "candidate findings",
+        "reviewed insights"
+      ],
+      "failure_modes": [
+        "exploration without synthesis",
+        "unreviewed claims as fact"
+      ],
+      "chains_with": [
+        "reasoning-techniques",
+        "evaluation-monitoring"
+      ],
+      "token_cost_estimate": 173
+    }
+  ]
+}
