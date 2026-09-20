@@ -1,42 +1,47 @@
-"""Classify complexity, spend the cheapest adequate model, and track spend in aggregate.
+"""Resource-aware optimisation: classify complexity, route to cheapest tier.
 
-Real framework: Google ADK QueryRouterAgent(BaseAgent) dispatching between a
-gemini-2.5-flash Agent and a gemini-2.5-pro Agent.
-Run: python3 examples/minimal.py
+Offline stub. `classify` and `call_model` stand in for LLM calls; the cost
+ledger and budget-triggered degradation are the pattern.
 """
-
-TIERS = {"simple": ("flash", 0.01), "complex": ("pro", 0.50)}
-BUDGET = 0.60
-spent = 0.0
-
-
-def classify(query: str) -> str:
-    """Fake router: long or multi-step questions get the expensive tier."""
-    return "complex" if len(query.split()) >= 8 or "why" in query.lower() else "simple"
+TIERS = {"simple": "small-model", "reasoning": "reasoning-model", "internet_search": "large-model"}
+COST_PER_1K = {"small-model": 0.15, "reasoning-model": 1.10, "large-model": 2.50}
+DOWNGRADE = {"large-model": "reasoning-model", "reasoning-model": "small-model", "small-model": "small-model"}
 
 
-def llm(model: str, query: str) -> str:
-    """Fake models: the cheap tier answers shorter."""
-    return f"[{model}] {'detailed' if model == 'pro' else 'brief'} answer to {query!r}"
+def classify(prompt: str) -> str:
+    """Stand-in for a JSON classifier prompt. Cheap heuristics are fine here."""
+    p = prompt.lower()
+    if any(w in p for w in ("today", "latest", "2026", "news")):
+        return "internet_search"
+    if any(w in p for w in ("why", "prove", "step", "how many")) or len(p.split()) > 20:
+        return "reasoning"
+    return "simple"
 
 
-def handle(query: str) -> str:
-    global spent
-    tier = classify(query)
-    model, cost = TIERS[tier]
-    if spent + cost > BUDGET:                  # aggregate check, not per call
-        model, cost = TIERS["simple"]
-        answer = llm(model, query)
-        spent += cost
-        return f"{answer}\n  DEGRADED: budget low, answered on the cheap tier"
-    answer = llm(model, query)
-    spent += cost
-    return f"{answer}\n  tier={tier} cost={cost:.2f} spent={spent:.2f}"
+def call_model(model: str, prompt: str) -> tuple[str, int]:
+    tokens = len(prompt.split()) * 4
+    return f"[{model}] answer to: {prompt}", tokens
 
 
-for q in ["capital of France?",
-          "why does the retry backoff double after each failed attempt?",
-          "explain in detail how the router picks between the two model tiers"]:
-    print(f"Q: {q}\n{handle(q)}\n")
+class Router:
+    def __init__(self, budget_usd: float):
+        self.budget, self.spend = budget_usd, 0.0
 
-print(f"total spent {spent:.2f} of budget {BUDGET:.2f}")
+    def handle(self, prompt: str) -> dict:
+        cls = classify(prompt)
+        model = TIERS[cls]
+        if self.spend > 0.9 * self.budget:            # graceful degradation
+            model = DOWNGRADE[model]
+        answer, tokens = call_model(model, prompt)
+        cost = tokens / 1000 * COST_PER_1K[model]
+        self.spend += cost
+        return {"classification": cls, "model": model, "cost": round(cost, 5), "answer": answer}
+
+
+if __name__ == "__main__":
+    r = Router(budget_usd=0.05)
+    for q in ["What is the capital of Australia?",
+              "Explain step by step why quantum computers threaten RSA.",
+              "What is the latest AI news today?",
+              "What is the latest AI news today?"]:
+        print(r.handle(q), f"total={r.spend:.4f}")

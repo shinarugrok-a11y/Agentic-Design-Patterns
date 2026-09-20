@@ -1,51 +1,44 @@
 ---
 name: planning
-description: Goal decomposition into ordered executable steps. Decompose a high-level goal into an ordered, dependency-aware list of executable steps before acting. Skip it when one tool call or a known fixed procedure completes the request.
+description: Decompose a goal into ordered steps before acting. Use for multi-step goals with unclear path. Not for single actions.
 role: [planner]
 chapter: 6
-token_cost_estimate: 370
-chains_with: [goal-setting-and-monitoring, multi-agent-collaboration, prioritization]
+token_cost_estimate: 218
+chains_with: [goal-setting, multi-agent]
 ---
 
 # Planning
 
 ## When to use
-- Goal needs multiple interdependent steps
-- Steps must be ordered by dependency
-- Work spans several tools or agents
+- Goal needs several dependent steps.
+- Path is not known up front; expect re-planning.
+- Steps must be visible and checkable.
 
 ## When NOT to use
-- One tool call completes the request
-- A known fixed procedure already applies
-- The environment changes faster than you can plan
+- Task is one action or a fixed pipeline.
+- Plan quality cannot be judged: add `reflection`.
 
 ## Inputs
-- goal statement
-- constraints and budget
-- available tools and agents
+- Goal + constraints
+- Available tools/agents
 
 ## Outputs
-- ordered step list with dependencies
-- success criteria per step
-- replan trigger conditions
+- Ordered plan with dependencies
+- Execution log
 
 ## Failure modes
-- Over-planning trivial tasks wastes tokens and time
-- Plan assumes tools or data that do not exist
-- No replanning hook, so the agent follows a stale plan
-- Steps too coarse for an executor to act on
+- Missing step discovered late.
+- Plan never revised after failure.
+- Over-planning trivial tasks.
 
 ## Minimal example
 ```python
-plan = llm.invoke(PLAN_PROMPT.format(goal=goal, tools=tool_names))
-# [{"id":1,"action":"search","depends_on":[],"done_when":"3 sources found"}, ...]
-for step in topological_order(plan):
-    result = execute(step)
-    if not meets(step["done_when"], result):
-        plan = replan(goal, done=results, failure=step)
+plan  = Task(description=f"Numbered step plan for: {goal}", agent=planner)
+write = Task(description="Execute the plan", agent=writer, context=[plan])
+Crew(agents=[planner, writer], tasks=[plan, write],
+     process=Process.sequential).kickoff()
 ```
 
 ## Next skills
-- If success must be tracked: load `goal-setting-and-monitoring`
-- If steps need specialists: load `multi-agent-collaboration`
-- If steps compete for resources: load `prioritization`
+- If plan needs measurable success criteria: load `goal-setting`
+- If steps are executed by agents: load `multi-agent`

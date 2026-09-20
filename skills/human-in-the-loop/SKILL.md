@@ -1,52 +1,45 @@
 ---
 name: human-in-the-loop
-description: Human approval gate on risky actions. Pause for human approval before any irreversible, high-risk, or ambiguous action. Skip it for reversible low-stakes actions where approval latency dominates the work.
+description: Human confirmation at high stakes. Use for irreversible or ambiguous actions. Not for routine volume.
 role: [safety]
 chapter: 13
-token_cost_estimate: 360
-chains_with: [guardrails-safety, exception-handling-and-recovery, evaluation-and-monitoring]
+token_cost_estimate: 231
+chains_with: [guardrails, exception-handling]
 ---
 
 # Human-in-the-Loop
 
 ## When to use
-- Action is irreversible or high-cost
-- Input is ambiguous or policy-sensitive
-- The domain requires accountable sign-off
+- Action is irreversible (payment, delete, send).
+- Low confidence or unclear policy.
+- Regulation requires sign-off.
 
 ## When NOT to use
-- Action is cheap and reversible
-- Approval latency outweighs the risk
-- Volume would force reviewers to rubber-stamp
+- High-volume routine decisions.
+- No human is available in time.
 
 ## Inputs
-- proposed action and rationale
-- escalation policy and thresholds
-- reviewer channel
+- Proposed action + context
+- Escalation channel
 
 ## Outputs
-- approve, reject, or edit decision
-- human feedback for later learning
-- audit record
+- Approved or rejected action
+- Audit record
 
 ## Failure modes
-- Escalating everything, which destroys throughput
-- Approval requests lacking the context to decide
-- Reviewer rubber-stamping under volume pressure
-- Sensitive data exposed to reviewers without redaction
+- Over-escalation fatigues reviewers.
+- Context lost at hand-off.
+- Approval assumed on timeout.
 
 ## Minimal example
 ```python
-proposal = agent.plan_action(request)
-if risk(proposal) >= THRESHOLD:
-    decision = reviewer.ask(summary=proposal.summary,   # enough context to judge
-                            diff=proposal.effects, redact=PII)
-    if decision != "approve":
-        return abort(decision)
-execute(proposal); audit.record(proposal, decision)
+def escalate_to_human(issue_type: str) -> dict:
+    """Escalate refunds, threats or unclear policy to a person."""
+    return {"status": "escalated", "issue": issue_type}
+agent = LlmAgent(name="support", tools=[troubleshoot, escalate_to_human],
+    instruction="If unsure or asked for a refund, escalate.")
 ```
 
 ## Next skills
-- If you need automated pre-filters: load `guardrails-safety`
-- If escalation follows a failure: load `exception-handling-and-recovery`
-- If human feedback should be scored: load `evaluation-and-monitoring`
+- If high stakes must be defined by policy: load `guardrails`
+- If the non-escalated path must recover alone: load `exception-handling`

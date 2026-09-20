@@ -1,51 +1,45 @@
 ---
 name: reflection
-description: Self-correction through critique and revision. Critique a draft against explicit criteria and regenerate it until the criteria are met. Skip it when latency or cost matters more than output quality.
+description: Generate, critique, refine. Use when output must meet explicit criteria. Not for cheap outputs.
 role: [critic]
 chapter: 4
-token_cost_estimate: 360
-chains_with: [evaluation-and-monitoring, reasoning-techniques, prompt-chaining]
+token_cost_estimate: 229
+chains_with: [evaluation-monitoring, goal-setting]
 ---
 
 # Reflection
 
 ## When to use
-- Output quality outranks latency and cost
-- Explicit criteria exist to judge against
-- Task is long-form text, code, or a plan
+- Output must meet explicit criteria.
+- Code where review catches bugs before use.
+- A stop signal can be defined.
 
 ## When NOT to use
-- Response is time- or cost-critical
-- No objective criteria to critique against
-- The producer is also the only available critic on a high-stakes task
+- Simple factual answers.
+- No objective criteria: loop never converges.
 
 ## Inputs
-- draft output
-- evaluation criteria or rubric
-- max iteration count
+- Task + criteria
+- Draft, max iterations
 
 ## Outputs
-- structured critique
-- revised output
-- stop reason
+- Refined output
+- Critique history + stop reason
 
 ## Failure modes
-- Loop never converges without a hard iteration cap
-- Self-critique rubber-stamps its own errors; use a separate critic
-- Accumulated drafts overflow the context window
-- Cost and latency multiply by the number of iterations
+- No stop condition: cost blow-up.
+- Same model as producer and critic: shared blind spots.
+- Vague critique makes refinement drift.
 
 ## Minimal example
 ```python
-draft = producer(task)
-for _ in range(MAX_ITERS):
-    critique = critic(draft, CRITERIA)     # separate agent, not self
-    if critique["verdict"] == "pass":
-        break
-    draft = producer(task, feedback=critique["issues"])
+draft = llm(task)
+for _ in range(max_iter):
+    crit = llm(f"Review vs task. Say CODE_IS_PERFECT if done.\n{draft}")
+    if "CODE_IS_PERFECT" in crit: break
+    draft = llm(f"Refine per critique:\n{crit}\n{draft}")
 ```
 
 ## Next skills
-- If you need repeatable scoring: load `evaluation-and-monitoring`
-- If the critique needs explicit inference: load `reasoning-techniques`
-- If revision spans stages: load `prompt-chaining`
+- If critic needs metrics or a rubric: load `evaluation-monitoring`
+- If stop criteria are tracked goals: load `goal-setting`

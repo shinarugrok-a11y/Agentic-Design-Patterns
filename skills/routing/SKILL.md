@@ -1,48 +1,43 @@
 ---
 name: routing
-description: Dynamic path selection. Classify the incoming request and dispatch it to one specialized handler, tool, or sub-agent. Skip it when there is exactly one valid handler or the path is fixed in advance.
+description: Dynamic path selection. Use to classify a request and dispatch one handler. Not when every request takes the same path.
 role: [planner, executor]
 chapter: 2
-token_cost_estimate: 350
-chains_with: [prompt-chaining, tool-use, resource-aware-optimization]
+token_cost_estimate: 219
+chains_with: [multi-agent, resource-aware-optimization]
 ---
 
 # Routing
 
 ## When to use
-- Two or more distinct handlers, tools, or sub-agents exist
-- Intent must be classified before work starts
-- Requests need triage by type, topic, or urgency
+- Requests fall into distinct categories.
+- Cheap path for easy cases, heavy path for hard ones.
+- Triage must precede expensive work.
 
 ## When NOT to use
-- Only one valid handler exists
-- The path is already fixed by prior state
-- Misroute cost exceeds the cost of running all paths
+- One fixed pipeline: use `prompt-chaining`.
+- Every branch must run: use `parallelization`.
 
 ## Inputs
-- user request or state
-- route catalog with descriptions
-- default fallback route
+- Request or state
+- Named handlers with descriptions
 
 ## Outputs
-- selected route id
-- routing rationale
-- arguments for the handler
+- Route label
+- Handler result (or fallback)
 
 ## Failure modes
-- Overlapping route descriptions make selection non-deterministic
-- No fallback route, so unmatched inputs dead-end
-- Router hallucinates a route id that does not exist
-- One misroute derails the whole downstream workflow
+- Silent misroute to the wrong handler.
+- No default branch for unclear input.
+- Router output not normalised (`' booker\n'`).
 
 ## Minimal example
 ```python
-ROUTES = {"billing": billing_agent, "tech": tech_agent, "other": human_handoff}
-choice = llm.invoke(ROUTER_PROMPT.format(query=q, routes=list(ROUTES)))
-ROUTES.get(choice.strip(), ROUTES["other"])(q)  # fallback is mandatory
+route = llm("One word: booker|info|unclear. Request: {req}").strip()
+handlers = {"booker": book, "info": lookup}
+result = handlers.get(route, handle_unclear)(req)
 ```
 
 ## Next skills
-- If the route is multi-stage: load `prompt-chaining`
-- If the route calls an API: load `tool-use`
-- If routing on cost: load `resource-aware-optimization`
+- If routes are full specialist agents: load `multi-agent`
+- If routing is by cost tier: load `resource-aware-optimization`

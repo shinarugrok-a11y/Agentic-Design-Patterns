@@ -1,40 +1,40 @@
-# Fable 5.1
+# Model profile: Fable 5.1
 
 ## Profile
 - Context window: ~1M tokens.
-- Cost: high per token. Every call should earn its price.
-- Strengths: long-horizon planning, holding a large problem in one context, critique.
-- Best fit: multi-hour agentic work, architecture decisions, reviewing other agents' output.
+- Cost: high per token. Spend it on thinking, not on re-reading.
+- Strengths: long-horizon planning, multi-hour agentic sessions, critique.
+- Owns roles: `planner`, `critic`.
 
 ## Skill budget
-- Load 10-15 skills. At ~375 tokens per SKILL.md that is 4-6k tokens, negligible here.
-- Load `references/patterns.md` freely for the skills you are actively applying.
-- Reading `manifest.json` in full is fine at this context size; do not bother slicing by role.
+- Load 10-15 skills per session (SKILL.md only, ~280 tokens each).
+- Load `references/patterns.md` (~250 tokens) for at most 3-4 skills that drive the plan;
+  `references/deep-dive.md` (~1.5K tokens) only when writing framework code.
+- Never load all 21 references; the manifest tells you which are relevant.
 
-## Owns
-- `planner` role: `planning`, `goal-setting-and-monitoring`, `prioritization`,
-  `resource-aware-optimization`, `multi-agent-collaboration`, `exploration-and-discovery`.
-- `critic` role: `reflection`, `reasoning-techniques`, `evaluation-and-monitoring`,
-  `learning-and-adaptation`.
+## Default skill set
+planner: planning, goal-setting, prioritization, routing, multi-agent, resource-aware-optimization
+critic: reflection, reasoning-techniques, evaluation-monitoring
+safety (always): guardrails, human-in-the-loop
+plus 1-3 task-specific skills (e.g. rag, tool-use, a2a, exploration-discovery).
 
-## Do
-- Decompose the goal first with `planning`, then hand concrete steps to a cheaper executor.
-- Define success criteria up front with `goal-setting-and-monitoring` so the executor can
-  self-check without calling back to you.
-- Act as the separate critic in `reflection` and the judge in `evaluation-and-monitoring`.
-  Do not let the executor grade its own work.
-- Use `resource-aware-optimization` to decide which steps belong on Grok 4.6 instead of here.
-- Write the plan down as data (step list with dependencies and done-when conditions) so
-  execution can resume without replaying your reasoning.
+## Should
+- Produce an explicit plan (`planning`) with measurable goals (`goal-setting`) before delegating.
+- Run a critique pass (`reflection`, `evaluation-monitoring`) on outputs from cheaper executors.
+- Decide model routing (`resource-aware-optimization`): hand execution loops to Grok 4.6.
+- Keep a written trajectory so long sessions can be audited and resumed (`memory-management`).
+- Re-plan on failure rather than retrying blindly (`exception-handling`).
 
-## Do not
-- Do not run tight execution loops here. Retry, poll, and iterate belong on Grok 4.6.
-- Do not use this model for bulk transformation, formatting, or file-by-file edits.
-- Do not re-read the whole manifest on every turn just because the context allows it.
-- Do not plan past the point of diminishing returns; a plan the executor cannot act on is
-  a plan that has to be rewritten.
+## Should not
+- Execute high-volume, repetitive tool loops itself; delegate them.
+- Retry the same failing tool call more than twice.
+- Take irreversible actions without a `human-in-the-loop` gate when the user is absent.
+- Paste whole reference files into sub-agent prompts; pass the skill id and let them load it.
 
-## Handoff
-- Down to Grok 4.6: ordered steps, per-step done-when criteria, the executor skills to load.
-- Down to Muse: only steps that are safe to propose to a human, with confirmation required.
-- Up from either: failure reports and trajectories, for `reflection` and replanning.
+## Handoff format to executors
+```
+skill_ids: [tool-use, prompt-chaining]
+goal: <one sentence>
+success_criteria: [<measurable>, ...]
+constraints: {budget_tokens, max_tool_calls, forbidden_actions}
+```

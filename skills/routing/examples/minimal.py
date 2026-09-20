@@ -1,45 +1,42 @@
-"""Classify each request into one route id, then dispatch with a mandatory fallback.
+"""Routing: classify a request, then dispatch to exactly one handler.
 
-Real framework: LangGraph / LCEL RunnableBranch
-  {"decision": router_chain, "request": RunnablePassthrough()} | delegation_branch
-Run: python3 examples/minimal.py
+Uses a stub classifier so it runs offline. Replace `classify` with an LLM
+call that returns one of the labels (remember to `.strip()` the output).
 """
-
-ROUTER_PROMPT = (
-    "Analyze the user's request and output exactly one route id from {routes}.\n"
-    "If the request fits none of them, output 'other'.\n\nRequest: {query}"
-)
+from typing import Callable, Dict
 
 
-def billing_agent(q: str) -> str:
-    return f"Billing handler processed: {q!r}"
+def booking_handler(request: str) -> str:
+    return f"[Booker] simulated booking for: {request!r}"
 
 
-def tech_agent(q: str) -> str:
-    return f"Tech handler processed: {q!r}"
+def info_handler(request: str) -> str:
+    return f"[Info] simulated lookup for: {request!r}"
 
 
-def human_handoff(q: str) -> str:
-    return f"Escalated to a human: {q!r}"
+def unclear_handler(request: str) -> str:
+    return f"[Coordinator] could not route: {request!r}. Please clarify."
 
 
-ROUTES = {"billing": billing_agent, "tech": tech_agent, "other": human_handoff}
+HANDLERS: Dict[str, Callable[[str], str]] = {"booker": booking_handler, "info": info_handler}
 
 
-def llm(prompt: str) -> str:
-    """Canned classifier; the last line returns a hallucinated id on purpose."""
-    query = prompt.rsplit("Request: ", 1)[1].lower()
-    if "invoice" in query or "charge" in query:
-        return " billing\n"
-    if "crash" in query or "error" in query:
-        return "tech"
-    return "refunds"  # not in ROUTES — the fallback must absorb it
+def classify(request: str) -> str:
+    """Stand-in for: llm('Output one word: booker|info|unclear ...').strip()"""
+    words = request.lower()
+    if any(k in words for k in ("book", "flight", "hotel")):
+        return "booker"
+    if words.endswith("?"):
+        return "info"
+    return "unclear"
 
 
-for query in ["Why was I charged twice on this invoice?",
-              "The app crashes on startup",
-              "Can you ship me a T-shirt?"]:
-    choice = llm(ROUTER_PROMPT.format(query=query, routes=list(ROUTES))).strip()
-    # Validate against the catalog: an unknown id falls back, never dispatches.
-    route = choice if choice in ROUTES else "other"
-    print(f"route={route:8} (model said {choice!r}) -> {ROUTES[route](query)}")
+def route(request: str) -> str:
+    decision = classify(request).strip()
+    handler = HANDLERS.get(decision, unclear_handler)  # default branch is mandatory
+    return handler(request)
+
+
+if __name__ == "__main__":
+    for req in ["Book me a hotel in Paris.", "What is the highest mountain?", "Tell me a random fact."]:
+        print(route(req))

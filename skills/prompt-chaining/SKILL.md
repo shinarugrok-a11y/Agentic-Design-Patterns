@@ -1,48 +1,43 @@
 ---
 name: prompt-chaining
-description: Sequential task decomposition. Split a task into ordered stages and feed each stage's output into the next prompt. Skip it when subtasks are independent or a single prompt already answers reliably.
+description: Sequential task decomposition. Use when each stage's output feeds the next. Not for independent sub-tasks.
 role: [executor]
 chapter: 1
-token_cost_estimate: 350
-chains_with: [routing, tool-use, reflection]
+token_cost_estimate: 227
+chains_with: [routing, tool-use]
 ---
 
 # Prompt Chaining
 
 ## When to use
-- Task splits into 2+ ordered stages
-- Each stage consumes the previous stage's output
-- You must validate or reshape data between stages
-- A single prompt keeps dropping instructions
+- Task has distinct stages (extract -> transform -> format).
+- One prompt drops constraints or drifts.
+- A tool call or check is needed between steps.
 
 ## When NOT to use
-- Subtasks are independent - parallelize instead
-- One prompt already passes your quality bar
-- Chain latency exceeds the request budget
+- Sub-tasks are independent: use `parallelization`.
+- Step order depends on input: use `routing`.
 
 ## Inputs
-- initial task text
-- stage prompt templates
-- per-stage output schema
+- Raw input
+- Ordered stage prompts (+ optional schema)
 
 ## Outputs
-- final stage output
-- intermediate artifacts per stage
+- Final artifact
+- Intermediate outputs for debugging
 
 ## Failure modes
-- Error in an early stage propagates silently to the end
-- Unparsed free text between stages breaks the next prompt
-- Latency and cost grow linearly with chain length
-- Context lost because only the last output is forwarded
+- Step-N error propagates downstream.
+- Early context lost unless passed explicitly.
+- Free-text handoff breaks the next parser.
 
 ## Minimal example
 ```python
-extract = prompt_extract | llm | StrOutputParser()
-chain = ({"specs": extract} | prompt_transform | llm | StrOutputParser())
-result = chain.invoke({"text_input": raw_text})
+extract = prompt("Extract specs: {text}") | llm | str
+to_json = prompt("Specs -> JSON {cpu,memory,storage}: {specs}") | llm | str
+result = ({"specs": extract} | to_json).invoke({"text": raw})
 ```
 
 ## Next skills
-- If stage 1 must choose a handler: load `routing`
-- If a stage needs external data: load `tool-use`
-- If stage output is unreliable: load `reflection`
+- If stage order depends on input: load `routing`
+- If a stage must call an API: load `tool-use`

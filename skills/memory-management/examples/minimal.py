@@ -1,53 +1,64 @@
-"""Memory: short-term state changes go through an event delta, and facts persisted to long-term memory are recalled in a later session.
+"""Memory management: scoped session state + searchable long-term store.
 
-Real framework: ADK session_service.append_event(session, Event(actions=EventActions(state_delta=...))) plus memory_service.add_session_to_memory / search_memory
-Run: python3 examples/minimal.py
+Offline stub mirroring ADK ideas: prefixed state keys (user:/app:/temp:),
+updates through a tool context (never mutate raw state directly), and a
+tiny long-term store with search.
 """
+import time
+from dataclasses import dataclass, field
 
-LONG_TERM = []
 
-
+@dataclass
 class Session:
-    def __init__(self, session_id, user_id):
-        self.id, self.user_id = session_id, user_id
-        self.state, self.events = {}, []
+    state: dict = field(default_factory=dict)
+    events: list = field(default_factory=list)
 
 
-def append_event(session, state_delta, text=""):
-    """The only way state changes: as a delta carried by an appended event."""
-    session.events.append({"state_delta": state_delta, "text": text})
-    session.state.update(state_delta)
+class ToolContext:
+    """Tools update state through this object so changes are recorded as events."""
+    def __init__(self, session: Session):
+        self._session = session
+        self.state = session.state
+
+    def commit(self, author: str):
+        self._session.events.append({"author": author, "state_delta": dict(self.state)})
 
 
-def add_session_to_memory(session):
-    """Persist durable state only; temp: keys never leave the session."""
-    facts = {k: v for k, v in session.state.items() if not k.startswith("temp:")}
-    LONG_TERM.append({"user_id": session.user_id, "facts": facts})
+def log_user_login(tool_context: ToolContext) -> dict:
+    s = tool_context.state
+    s["user:login_count"] = s.get("user:login_count", 0) + 1      # persists across sessions
+    s["task_status"] = "active"                                   # session scope
+    s["user:last_login_ts"] = time.time()
+    s["temp:validation_needed"] = True                            # discarded after invocation
+    tool_context.commit("log_user_login")
+    return {"status": "success", "message": f"logins={s['user:login_count']}"}
 
 
-def search_memory(query, user_id):
-    return [value for record in LONG_TERM if record["user_id"] == user_id
-            for key, value in record["facts"].items() if query in key]
+class LongTermStore:
+    def __init__(self):
+        self._items: dict[tuple, dict] = {}
+
+    def put(self, namespace: tuple, key: str, value: dict):
+        self._items[namespace + (key,)] = value
+
+    def search(self, namespace: tuple, query: str) -> list[dict]:
+        q = set(query.lower().split())
+        hits = [(len(q & set(str(v).lower().split())), v)
+                for k, v in self._items.items() if k[:len(namespace)] == namespace]
+        return [v for score, v in sorted(hits, key=lambda h: -h[0]) if score]
 
 
-def llm(prompt: str) -> str:
-    """Fake model: answers only from what the prompt contains."""
-    return f"Rebooking you on {prompt.split(': ')[-1]}."
+def end_of_invocation(session: Session):
+    for k in [k for k in session.state if k.startswith("temp:")]:
+        del session.state[k]
 
 
-first = Session("s1", "u1")
-append_event(first, {"user:preferred_airline": "Lufthansa", "temp:draft": "scratch"},
-             text="user states a preference")
-print(f"turn 1 state: {first.state}")
-print(f"turn 1 events recorded: {len(first.events)}")
+if __name__ == "__main__":
+    session = Session(state={"user:login_count": 0, "task_status": "idle"})
+    print(log_user_login(ToolContext(session)))
+    end_of_invocation(session)
+    print("state:", session.state)
 
-add_session_to_memory(first)
-print(f"long-term store: {LONG_TERM}")
-
-later = Session("s2", "u1")
-print(f"new session starts empty: {later.state}")
-
-hits = search_memory("airline", user_id="u1")
-append_event(later, {"recalled_airline": hits[0]}, text="memory recall")
-print(f"recalled {hits} -> state: {later.state}")
-print(llm(f"Book a flight. Known preference: {later.state['recalled_airline']}"))
+    store = LongTermStore()
+    store.put(("user-1", "prefs"), "a-memory", {"rules": ["short direct language", "english and python"]})
+    print("search:", store.search(("user-1",), "language preferences python"))

@@ -1,50 +1,43 @@
 ---
 name: resource-aware-optimization
-description: Spend the cheapest resource that meets the bar. Classify request complexity, then spend the cheapest model, tool, and context that meets the quality bar. Skip it when every request needs maximum quality or budget is not a constraint.
+description: Route by complexity to the cheapest adequate model. Use under cost or latency budgets. Not when one model fits.
 role: [planner]
 chapter: 16
-token_cost_estimate: 370
-chains_with: [routing, prioritization, evaluation-and-monitoring]
+token_cost_estimate: 192
+chains_with: [routing, evaluation-monitoring]
 ---
 
 # Resource-Aware Optimization
 
 ## When to use
-- API spend or latency is capped
-- Request complexity varies widely
-- Hardware, bandwidth, or battery is constrained
+- Cost or latency budget is binding.
+- Query difficulty varies widely.
+- Cheap model handles most traffic.
 
 ## When NOT to use
-- Every request demands maximum quality
-- Router overhead exceeds the savings
-- Silent quality loss would be unacceptable
+- One model meets budget and quality.
+- Quality cannot be verified per tier.
 
 ## Inputs
-- request with complexity signal
-- model and tool tiers with costs
-- budget and latency limits
+- Query
+- Model tiers with cost/quality
 
 ## Outputs
-- chosen tier and rationale
-- consumption record
-- degraded-mode response when over budget
+- Chosen tier + answer
+- Cost log
 
 ## Failure modes
-- Router misjudges complexity and downgrades a hard task
-- Router overhead costs more than it saves on cheap requests
-- Budget tracked per call but never in aggregate
-- Silent quality degradation with no signal to the caller
+- Hard query labelled simple.
+- No critique loop on cheap answers.
+- Classifier itself too expensive.
 
 ## Minimal example
 ```python
-tier = classify(query)                     # "simple" | "complex"
-model = FLASH if tier == "simple" else PRO
-answer = model.invoke(query)
-budget.charge(model.cost(answer))          # track aggregate, not per call
-if budget.exhausted: return degrade(answer, notify=True)
+tier = llm_flash(f"Label simple|reasoning|internet: {q}").strip()
+model = {"simple": flash, "reasoning": pro, "internet": flash_search}[tier]
+answer = model(q)
 ```
 
 ## Next skills
-- If tiering is intent-based: load `routing`
-- If work must be ordered by value: load `prioritization`
-- If quality drift needs tracking: load `evaluation-and-monitoring`
+- If the classifier needs design: load `routing`
+- If cost and quality must be tracked: load `evaluation-monitoring`
