@@ -7,8 +7,9 @@
 - Owns roles: `planner`, `critic`.
 
 ## Skill budget
-- Load 10-15 skills per session (SKILL.md only, ~350 tokens each).
-- Load `references/patterns.md` for at most 3-4 skills that drive the current plan.
+- Load 10-15 skills per session (SKILL.md only, ~280 tokens each).
+- Load `references/patterns.md` (~250 tokens) for at most 3-4 skills that drive the plan;
+  `references/notebook-code.md` (~1K tokens) only when writing framework code.
 - Never load all 21 references; the manifest tells you which are relevant.
 
 ## Default skill set
