@@ -25,12 +25,11 @@ self-contained skill per chapter in `skills/`.
 - safety: `exception-handling-and-recovery`, `human-in-the-loop`, `guardrails-safety`
 
 ## Layout
-- `manifest.json` — machine-readable index of all 21 skills.
 - `skills/<id>/SKILL.md` — the card: when to use, inputs, outputs, failure modes, next skills.
 - `skills/<id>/references/patterns.md` — on-demand detail, ~600-1000 tokens.
 - `skills/<id>/examples/minimal.py` — runnable, dependency-free demo of the control flow.
-- `models/` — per-model guidance for Fable 5.1, Grok 4.6, and Muse.
-- `chapter_notebooks/Chapter_NN_*.SKILL.md` — the same card, reachable from the notebook path.
+- `models/` — per-model guidance. `chapter_notebooks/Chapter_NN_*.SKILL.md` — same card,
+  reachable from the notebook path.
 
 ## Rules
 - Do not read the PDF. It is 458 pages and it is for humans.

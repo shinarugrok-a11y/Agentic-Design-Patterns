@@ -7,6 +7,7 @@ Usage:
 """
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "manifest.json"
 ROLES = {"planner", "executor", "critic", "memory", "safety"}
 SKILL_TOKEN_CAP = 400
+REF_TOKEN_CAP = 1000
 AGENTS_LINE_CAP = 60
 LAZY_LOAD_BUDGET = 3000
 REQUIRED_SECTIONS = [
@@ -35,6 +37,12 @@ def tokens(text):
     except Exception:
         # Conservative fallback when tiktoken is unavailable.
         return max(len(text) // 4, int(len(text.split()) * 1.3))
+
+
+def companion_name(rec):
+    """Sibling card in chapter_notebooks/, one per chapter rather than per notebook."""
+    slug = re.sub(r"[^A-Za-z0-9]+", "_", rec["name"]).strip("_")
+    return f"Chapter_{rec['chapter']:02d}_{slug}.SKILL.md"
 
 
 def frontmatter(text):
@@ -85,6 +93,26 @@ def main(sync=False):
         for rel in ("SKILL.md", "references/patterns.md", "examples/minimal.py"):
             if not (skill_dir / rel).is_file():
                 errors.append(f"{sid}: missing {rel}")
+        example = skill_dir / "examples" / "minimal.py"
+        if example.is_file():
+            try:
+                proc = subprocess.run([sys.executable, "minimal.py"],
+                                      cwd=example.parent, capture_output=True,
+                                      text=True, timeout=30)
+                if proc.returncode != 0:
+                    errors.append(f"{sid}: examples/minimal.py exited "
+                                  f"{proc.returncode}: "
+                                  f"{proc.stderr.strip().splitlines()[-1:]}")
+                elif not proc.stdout.strip():
+                    errors.append(f"{sid}: examples/minimal.py printed nothing")
+            except subprocess.TimeoutExpired:
+                errors.append(f"{sid}: examples/minimal.py timed out")
+        ref_md = skill_dir / "references" / "patterns.md"
+        if ref_md.is_file():
+            n_ref = tokens(ref_md.read_text())
+            if n_ref > REF_TOKEN_CAP:
+                errors.append(f"{sid}: references/patterns.md is {n_ref} tokens "
+                              f"(cap {REF_TOKEN_CAP})")
         if not skill_md.is_file():
             continue
 
@@ -115,12 +143,18 @@ def main(sync=False):
                 f"drifted from measured {n}; rerun with --sync"
             )
 
-        companion = list((ROOT / "chapter_notebooks").glob(
+        companion = ROOT / "chapter_notebooks" / companion_name(rec)
+        if sync:
+            companion.write_text(text)
+        found = list((ROOT / "chapter_notebooks").glob(
             f"Chapter_{rec['chapter']:02d}_*.SKILL.md"))
-        if not companion:
-            errors.append(f"{sid}: no chapter_notebooks companion SKILL.md")
-        elif companion[0].read_text() != text:
-            errors.append(f"{sid}: companion {companion[0].name} out of sync")
+        if not companion.is_file():
+            errors.append(f"{sid}: missing companion {companion.name}")
+        elif companion.read_text() != text:
+            errors.append(f"{sid}: companion {companion.name} out of sync")
+        if len(found) > 1:
+            errors.append(f"{sid}: {len(found)} companions for chapter "
+                          f"{rec['chapter']}, expected 1")
 
     agents = ROOT / "AGENTS.md"
     if not agents.is_file():
@@ -144,8 +178,8 @@ def main(sync=False):
     # AGENTS.md -> skill index -> 2 SKILL.md -> 1 references file.
     route = tokens(agents.read_text()) if agents.is_file() else 0
     full_index = tokens(MANIFEST.read_text())
-    slice_fields = ("id", "name", "when_to_use", "when_not_to_use",
-                    "chains_with", "token_cost_estimate")
+    # Same projection as the jq slice documented in AGENTS.md.
+    slice_fields = ("id", "when_to_use", "chains_with")
     role_slice = [{k: s[k] for k in slice_fields if k in s}
                   for s in skills if "executor" in s.get("role", [])]
     slice_cost = tokens(json.dumps(role_slice, indent=2))
