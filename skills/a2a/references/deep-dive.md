@@ -1,4 +1,4 @@
-# Inter-Agent Communication (A2A) — reference patterns
+# Inter-Agent Communication (A2A) — deep dive
 
 Source: Chapter 15 + `Chapter_15_Inter_Agent_(A2A_AgentCard_WeatherBot)`,
 `Chapter_15_Inter_Agent_(A2A)`, `Chapter_15_Inter_Agent_(Sync_Streaming_Requests)`.
@@ -111,3 +111,30 @@ handle task.state: completed | input-required (ask user, resend) | failed
 - Streaming for anything longer than a few seconds.
 - Auth scheme declared in card and enforced by the server.
 - Separate ports/hosts per agent for independent scaling.
+
+## Pattern variants
+- **Synchronous request/response** — `sendTask` / `tasks/send`; client blocks for one complete answer. Quick lookups.
+- **Asynchronous polling** — server returns `working` plus a task id at once, client polls to `completed` or `failed`; the safe default for long work.
+- **Streaming (SSE)** — `sendTaskSubscribe` / `tasks/sendSubscribe` holds one server-to-client connection and pushes incremental artifacts; use when partial results are useful.
+- **Push notification (webhook)** — client registers a callback URL, server pushes on state change; for long tasks where polling or an open socket is wasteful.
+- **Discovery** — well-known URI (`/.well-known/agent.json`) for open ecosystems, curated registry for enterprise access control, direct configuration for tightly coupled private pairs.
+
+## More prompt templates
+Client agent, delegation policy:
+```
+Before delegating, fetch the peer's Agent Card and confirm a skill whose
+description and examples cover this request. If none does, do not delegate.
+Send one task; keep its id and contextId. On state `input-required`, reply in
+the same task with the same contextId, never in a new task.
+```
+
+## Framework notes
+- **LangChain / LangGraph, CrewAI** — framework-neutral by design: any can sit behind an A2A endpoint, and the client never sees the peer's internals (the remote agent is "opaque").
+- **Google ADK** — `AgentSkill` / `AgentCard` / `AgentCapabilities` describe the agent; `A2AStarletteApplication` + `DefaultRequestHandler` + `InMemoryTaskStore` serve it.
+- **MCP contrast** — MCP standardizes an agent's access to tools and data; A2A standardizes task delegation between agents. They compose.
+
+## Failure modes in depth
+- **Card overstates capabilities** — skills advertised but unimplemented, or `streaming: true` on a server that never emits SSE; match the request against skill `examples` and treat a first delegation as a probe with a fallback.
+- **Orphaned tasks on partition** — a polled task stays `submitted`/`working` forever; set a client-side deadline per task id, and prefer push notifications so completion survives a dropped client.
+- **Context lost at `input-required`** — the reply opens a fresh task; carry the server-generated `contextId` and original task id on every follow-up, with `historyLength` set to replay the thread.
+- **Unauthenticated endpoints** — the card is itself a discovery surface; declare `authentication` schemes, pass OAuth 2.0 tokens or API keys in headers (never URLs or bodies), and guard card and task endpoints with mTLS plus audit logs.

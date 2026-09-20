@@ -1,4 +1,4 @@
-# Prioritization — reference patterns
+# Prioritization — deep dive
 
 Source: Chapter 20 + `Chapter_20_Prioritization_(SuperSimplePM).ipynb`.
 
@@ -100,3 +100,39 @@ Never assign P0 to more than {n} tasks.
 - Create before prioritise (ids first).
 - Explicit defaults for missing info.
 - Bound P0 count; re-rank on change; log rationale.
+
+## Pattern variants
+- **Criteria scoring** — weight urgency, importance, dependencies, resource availability, and cost/benefit into one number; reproducible and auditable.
+- **Priority tiers** — map language ("urgent", "ASAP", "critical") onto a fixed ladder such as P0/P1/P2, with a stated default (P1) when the request says nothing.
+- **LLM-as-ranker** — the model reads the request and applies the criteria in its instruction; use when criteria are fuzzy or user-stated, not when the ranking must be reproducible.
+- **Dependency-aware selection** — filter to tasks whose prerequisites are done before scoring, so blocked work never reaches the top.
+- **Dynamic re-prioritization** — recompute on a triggering event (new critical alert, approaching deadline), not on every tick.
+- **Level of prioritization** — high-level goal selection, sub-task ordering inside a plan, or immediate action selection; pick one level per ranking pass.
+
+## More prompt templates
+Project-manager agent instruction (from the chapter's `pm_prompt_template` system message):
+
+```
+You are a focused Project Manager agent. When you receive a task request:
+1. Create the task with `create_new_task` first - you need the task_id.
+2. Inspect the request for a priority or an assignee.
+   - Urgency words ("urgent", "ASAP", "critical") map to P0; use
+     `assign_priority_to_task`.
+   - A named worker goes to `assign_task_to_worker`.
+3. If priority or assignee is missing, apply the default: P1, 'Worker A'.
+4. Finish with `list_all_tasks` to show the resulting queue.
+Workers: 'Worker A', 'Worker B', 'Review Team'.
+Priorities: P0 (highest), P1 (medium), P2 (lowest).
+```
+
+State the tie-break and the default in the prompt; an unstated default is an invisible ranking rule.
+
+## Framework notes
+- **LangChain** — `create_react_agent` + `AgentExecutor`, Pydantic `args_schema` per tool, `ConversationBufferMemory` so re-prioritization sees earlier decisions.
+- **Google ADK / CrewAI** — no prioritization example in this chapter; the same shape works as a ranking tool plus `session.state` for the queue.
+
+## Failure modes in depth
+- **Unstated weights** — an LLM ranking with no written criteria cannot be reproduced or reviewed; put the weights and the default tier in the instruction, and keep the scoring in a tool rather than in free text.
+- **Re-ranking thrash** — recomputing every tick makes the agent switch tasks mid-flight; re-prioritize only on events that change the inputs, and keep the current task unless the new top item beats it by a margin.
+- **Dependencies ignored** — a high-urgency item whose prerequisite is unfinished scores top and then stalls; build the ready set first (`depends_on` satisfied), then score only that set.
+- **Starvation** — P2 items never surface under a pure score sort; add an aging term that raises a task's score with queue time, or reserve capacity per tier.

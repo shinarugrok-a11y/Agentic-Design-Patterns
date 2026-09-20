@@ -24,4 +24,4 @@ ONLY output one word.
 - Label drift (`' Booker\n'`) -> `.strip().lower()`.
 - No fallback -> always define an `unclear` handler.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_02_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_02_*`.

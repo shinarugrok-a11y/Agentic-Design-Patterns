@@ -1,4 +1,4 @@
-# Memory Management — reference patterns
+# Memory Management — deep dive
 
 Source: Chapter 8 + `Chapter_08_Memory_(ADK_SessionService)`, `(ADK_LlmAgent_output_key)`,
 `(ADK_Explicit_State_Update)`, `(ADK_MemoryService_InMemory)`, `(LangChain_LangGraph)`.
@@ -105,3 +105,43 @@ def call_model(state, store):
 - Summarise or window history before the context fills.
 - Use a persistent session service outside notebooks.
 - Search long-term memory with a query, then inject only the hits.
+
+## Pattern variants
+- **Session state** — a per-thread dict (`session.state`) holding task flags and scratch values; wins for progress within one conversation.
+- **Conversation buffer** — replay the turn history into the prompt via a `{history}` slot; wins for short chats where recency is all that matters.
+- **Long-term semantic recall** — sessions written to a vector-backed service and searched by query; wins when facts must outlive the thread.
+- **Namespaced store** — records under `(user_id, context)`, retrieved by filter plus similarity; wins when recall must be scoped per user.
+- **Procedural memory** — stored instructions the agent rewrites by reflecting on the conversation; wins when behavior itself should adapt.
+- **Managed service** — Vertex AI Memory Bank or `VertexAiRagMemoryService`; wins in production.
+
+## More prompt templates
+Short-term recall by prompt slot (`memory_key` must match the template variable):
+
+```
+You are a helpful travel agent.
+
+Previous conversation:
+{history}
+
+New question: {question}
+Response:
+```
+
+Procedural-memory update — reflect, then return replacement rules:
+
+```
+Current instructions: {instructions}
+Conversation: {conversation}
+Return only improved instructions: keep what worked, fix what did not.
+```
+
+## Framework notes
+- **LangChain / LangGraph** — `ChatMessageHistory` / `ConversationBufferMemory` inject one conversation; LangGraph's `BaseStore` keeps semantic, episodic, and procedural memory across sessions under namespaces.
+- **Google ADK** — `Session` is the thread, `State` its temporary data, `SessionService` (`InMemory`, `Database`, `VertexAi`) its lifecycle, and `MemoryService` the searchable long-term store.
+- **Other** — Vertex AI Memory Bank is the managed equivalent of a self-hosted long-term store.
+
+## Failure modes in depth
+- **Unbounded history growth** — a buffer replays every turn and eventually exceeds the context window. Window or summarize it, and keep durable facts in long-term memory, fetched on demand.
+- **Mutating state in place** — assigning to the state dict outside an event is not tracked or persisted. Write via `output_key` or `EventActions(state_delta=...)` with `append_event`.
+- **Stale or contradictory long-term facts** — overwrite a record at its existing key (`store.put(namespace, key, ...)`) instead of appending another version, so retrieval cannot return both.
+- **Sensitive data persisted without scoping** — use the prefixes deliberately: `temp:` for values that must not survive the turn, `user:` and `app:` for deliberate scope, and namespace long-term writes by `user_id`.

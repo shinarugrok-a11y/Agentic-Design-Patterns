@@ -1,4 +1,4 @@
-# Reasoning Techniques — reference patterns
+# Reasoning Techniques — deep dive
 
 Source: Chapter 17 + `Chapter_17_Reasoning_(CoT_Prompt)`, `(Self_Correction)`,
 `(Executing_Code)`, `(Google_DeepSearch)`.
@@ -93,3 +93,45 @@ Route arithmetic/data work to the code agent instead of reasoning in text.
 - Reasoning traces leak into user-facing output; separate sections.
 - Extra tokens on trivial tasks; gate by `resource-aware-optimization`.
 - Models with built-in hidden reasoning may not need explicit CoT; test both.
+
+## Pattern variants
+- **Chain-of-Thought (CoT)** — one linear sequence of intermediate steps; cheapest, enough when the path does not branch.
+- **Tree-of-Thoughts (ToT)** — branch into candidate thoughts, evaluate, backtrack; wins when the first plausible path is often wrong.
+- **Self-correction / self-refinement** — critique the draft against the original requirements, then rewrite; wins where a quality bar, not a fact, is the hard part.
+- **ReAct** — interleave Thought, Action, Observation so feedback steers the next step; the default once tools or external state are involved.
+- **Program-Aided Language Models (PALM)** — offload arithmetic, symbolic, or data work to generated code, executed deterministically.
+- **Self-consistency / multiple candidates** — sample several answers and select one; the Scaling Inference Law in practice, where a small model with a big thinking budget beats a larger one-pass model.
+- **Chain of Debates (CoD), Deep Research** — several diverse models argue to cut single-model bias; or one agent loops search, reflect on gaps, re-search, synthesize under a time budget.
+
+## More prompt templates
+CoT, numbered stages (the chapter's retrieval agent):
+```
+Answer the question by thinking step-by-step.
+1. Analyze the query: key entities and what is actually being asked.
+2. Formulate the search queries you would run against the knowledge base.
+3. Simulate retrieval: what would each return, what stays ambiguous?
+4. Synthesize the findings into a complete answer.
+5. Review and refine: accurate, comprehensive, concise? If not, fix it.
+Query: {question}
+```
+
+Self-correction over an existing draft:
+```
+You are a critical, detail-oriented Self-Correction Agent.
+1. Restate the original requirements and constraints.
+2. Name every discrepancy: accuracy, completeness, clarity, tone, redundancy.
+3. Propose a concrete fix for each — a solution, not just the problem.
+4. Output the fully revised content.
+Requirements: {requirements}
+Draft: {draft}
+```
+
+## Framework notes
+- **LangChain / LangGraph** — cycles are the point: `add_conditional_edges` from a reflection node back to research turns a chain into deliberation; the loop cap lives in graph config.
+- **Google ADK** — `BuiltInCodeExecutor` for PALM-style execution; `agent_tool.AgentTool` exposes a reasoning specialist as a callable tool of a root agent.
+
+## Failure modes in depth
+- **Fluent but wrong traces** — a trace is generated text, not proof, and can rationalize a wrong answer; verify the conclusion independently (code execution, retrieval, a critic pass).
+- **Combinatorial tree explosion** — ToT branching with no evaluator; score each thought, keep top-k, cap depth and total node budget.
+- **ReAct repeating a failed action** — the observation never changes, so neither does the next thought; cap steps, hash (action, args) to detect repeats, and force a different action or a final answer.
+- **Traces leaked to users** — reasoning carries retrieved internal data and half-formed conclusions; return the answer plus a short justification, keep the full trace in logs.

@@ -1,4 +1,4 @@
-# Resource-Aware Optimization — reference patterns
+# Resource-Aware Optimization — deep dive
 
 Source: Chapter 16 + `Chapter_16_Resource_Optimization_(Code_Snippets)`,
 `Chapter_16_Resource_Optimization_(OI_Google_Search)`.
@@ -102,3 +102,38 @@ if spend > budget * 0.9: downgrade_tier()
 - Keep a quality floor: sample cheap-path answers for critique.
 - Prune context (summaries, windowing) before switching models.
 - Define degradation order: model tier -> fewer tools -> shorter output -> refuse.
+
+## Pattern variants
+- **Dynamic model switching** — a router agent classifies complexity and picks Gemini Flash vs. Pro (or gpt-4o-mini vs. o4-mini vs. gpt-4o); the core variant.
+- **Adaptive tool selection** — route on what the query needs, not only how hard it is: reach for search only when the answer sits outside training data, since each tool carries its own cost.
+- **Critique-agent feedback loop** — a separate critic scores answers and its verdicts retune the router; catches simple-to-Pro and complex-to-Flash misroutes.
+- **Sequential model fallback** — an ordered model list; on unavailability, rate limit, or content filter the request re-routes to the next. Continuity, not savings.
+- **Other levers in the chapter's spectrum** — contextual pruning and summarization (fewer prompt tokens rather than a cheaper model), proactive resource prediction, energy-efficient edge deployment, graceful degradation.
+
+## More prompt templates
+Router/classifier (closed label set plus JSON, so the tier map cannot drift):
+```
+You are a classifier that analyzes user prompts and returns one of three
+categories ONLY: simple, reasoning, internet_search.
+- 'simple': direct factual questions needing no reasoning or current events.
+- 'reasoning': logic, math, or multi-step inference questions.
+- 'internet_search': current events or anything outside your training data.
+Respond ONLY with JSON like: { "classification": "simple" }
+```
+
+Critic agent (the signal that keeps a cheap tier honest):
+```
+You are the Critic Agent, the quality assurance arm of this system. Review the
+answering agent's output for factual correctness, thoroughness, and bias. Name
+missing data or inconsistent reasoning, and propose concrete fixes.
+```
+
+## Framework notes
+- **Google ADK** — tiers are `Agent`s differing only in `model=`; the router is a `BaseAgent` whose `_run_async_impl` yields `Event`s and would `transfer_to_agent` in production.
+- **OpenAI SDK / OpenRouter** — OpenRouter does this at the API layer: `"model": "openrouter/auto"`, or an ordered model list for sequential fallback.
+
+## Failure modes in depth
+- **Router misjudges complexity** — a word-count heuristic calls a short but hard question simple; back it with a critic agent and let repeated "inadequate Flash answer" verdicts move the threshold.
+- **Router overhead exceeds savings** — an LLM classifier on gpt-4o can cost more than the cheap answer it buys; classify with a small model or heuristic, and skip routing where the tier is already known.
+- **Budget tracked per call, never in aggregate** — charge a running counter after every call instead of only checking a per-request cap; the router must read remaining budget and time, not just the query.
+- **Silent quality degradation** — the caller cannot tell a Flash answer from a Pro one; return the model used with the answer, and mark degraded or fallback results explicitly.

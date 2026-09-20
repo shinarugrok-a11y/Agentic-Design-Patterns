@@ -23,4 +23,4 @@ Priority: P0 blocks others or is due today; P1 due this week; P2 otherwise.
 - Priority before id -> enforce tool order in prompt.
 - Stale ranking -> re-score on each new task.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_20_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_20_*`.

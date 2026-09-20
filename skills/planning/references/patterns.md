@@ -23,4 +23,4 @@ Writer: Follow the plan exactly. Mark each step done and note deviations.
 - Stale plan -> re-plan trigger on failure.
 - Over-planning -> skip for single-step tasks.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_06_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_06_*`.

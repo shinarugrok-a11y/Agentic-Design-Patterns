@@ -1,4 +1,4 @@
-# Tool Use (Function Calling) — reference patterns
+# Tool Use (Function Calling) — deep dive
 
 Source: Chapter 5 + `Chapter_05_Tool_Use_(LangChain).ipynb`, `(CrewAI)`,
 `(Executing_Code)`, `(Google_Search)`, `(Vertex_AI_Search)`.
@@ -123,3 +123,37 @@ In notebooks use `nest_asyncio.apply()` before `asyncio.run`.
 - Raise for unexpected failures; return structured dicts (`{"status": ..., ...}`) for expected outcomes.
 - Keep outputs small; summarise large payloads before returning.
 - Restrict dangerous tools (`before_tool_callback`, see `guardrails`).
+
+## Pattern variants
+- **Function tool** — a plain typed function exposed with `@tool`; wins for one deterministic action with a clear schema.
+- **Pre-built tool** — framework-supplied `google_search`, `BuiltInCodeExecutor`, Vertex AI Search; wins when the integration is standard and not worth owning.
+- **Code execution as tool** — the model writes Python, a sandbox runs it; wins for exact arithmetic and ad-hoc data work no fixed schema covers.
+- **Grounded datastore tool** — `VSearchAgent` over a datastore returning `grounding_metadata`; wins when answers must cite private documents.
+
+## More prompt templates
+The docstring *is* the selection prompt — say what it returns and when to pick it:
+
+```
+Provides factual information on a given topic. Use this tool to find answers
+to questions like 'What is the capital of France?' or 'What is the weather
+in London?'. Returns the price as a float; raises ValueError if not found.
+```
+
+Tool-calling agents need a scratchpad slot for the call/result loop:
+
+```
+system: You are a helpful assistant.
+human:  {input}
+placeholder: {agent_scratchpad}
+```
+
+## Framework notes
+- **LangChain / LangGraph** — `@tool` declares; `create_tool_calling_agent` binds llm+tools+prompt; `AgentExecutor` is the runtime that actually executes calls and feeds results back.
+- **Google ADK** — ships `google_search`, `BuiltInCodeExecutor`, and `VSearchAgent`; the `Runner` streams `executable_code` / `code_execution_result` / `grounding_metadata` parts.
+- **CrewAI** — `@tool("Name")` attaches per `Agent`; `Task.description` and `expected_output` tell it how to behave when the tool fails.
+
+## Failure modes in depth
+- **Vague tool descriptions cause wrong-tool selection** — the docstring is the model's only signal. Name the return type and include example queries the tool covers.
+- **Hallucinated or malformed arguments** — use few, flat, annotated parameters (`ticker: str -> float`) so schema validation rejects bad calls before the API is hit.
+- **Unvalidated side effects** — split read tools from write tools; gate irreversible calls behind explicit confirmation rather than tool-choice.
+- **Tool errors returned raw trigger retry loops** — raise a typed `ValueError` and instruct the task what to report on failure, so the model does not re-read an error string as data and retry forever.

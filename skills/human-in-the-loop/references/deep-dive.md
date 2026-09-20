@@ -1,4 +1,4 @@
-# Human-in-the-Loop (HITL) — reference patterns
+# Human-in-the-Loop (HITL) — deep dive
 
 Source: Chapter 13 + `Chapter_13_Human_in_the_Loop_(Customer_Support).ipynb`.
 
@@ -90,3 +90,40 @@ Never treat silence or a timeout as approval; default to no-op and log.
 Store human decisions with the case id so they can be replayed as
 evaluation data (`evaluation-monitoring`) or used to adapt policies
 (`learning-adaptation`).
+
+## Pattern variants
+- **Escalation gate** — agent calls an `escalate_to_human` tool when the case exceeds its competence; the default and cheapest variant.
+- **Decision augmentation** — agent analyses and recommends, human makes the call; use where accountability is legally required (loan approval, sentencing, diagnosis).
+- **Human-on-the-loop** — human sets policy up front, agent executes autonomously inside it; use when volume makes per-case review impossible (trading limits, call routing rules).
+- **Intervention and correction** — human patches a stuck or wrong run mid-flight and supplies the missing data.
+- **Feedback for learning** — approvals, edits, and labels are logged as training signal (RLHF, annotation); pairs with any variant above.
+
+## More prompt templates
+```
+You are a {domain} specialist. Resolve the request autonomously when you can.
+Escalate with escalate_to_human(issue_type, details) when ANY holds:
+- the action is irreversible or exceeds {threshold};
+- policy is ambiguous or the case is borderline;
+- the user is distressed, or you have already retried twice.
+Never guess on an escalation-triggering case. State why you escalated.
+```
+
+```
+REVIEW REQUEST — {action_type}, risk {score}
+Proposed action: {one_line_summary}
+Effects if approved: {diff}
+Agent rationale: {why}
+Evidence: {citations}
+Unknowns the agent could not resolve: {open_questions}
+Reply exactly one of: APPROVE | REJECT <reason> | EDIT <revised action>
+```
+
+## Framework notes
+- **LangChain / LangGraph** — the chapter notes LangChain offers equivalent interaction tools; in LangGraph this is an interrupt before the tool node, resumed with the reviewer's decision.
+- **Google ADK** — escalation is an ordinary tool; `ToolContext` / `CallbackContext.state` carry the case file, and callbacks are the hook for redaction and context injection.
+
+## Failure modes in depth
+- **Escalating everything** — thresholds set on fear rather than measured risk; gate on an explicit risk score plus reversibility, and track escalation rate as an SLO.
+- **Requests lacking context** — the reviewer sees a verdict, not the case; send summary, concrete effects, rationale, and open questions in one payload (template above).
+- **Rubber-stamping under volume** — HITL does not scale to millions of cases; pre-filter automatically, sample-audit the auto-approved tail, and staff for the residual.
+- **Sensitive data exposed to reviewers** — the chapter flags anonymization as a hard requirement; redact PII in the callback that builds the review payload, not in the reviewer UI.

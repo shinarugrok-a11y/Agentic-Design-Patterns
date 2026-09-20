@@ -23,4 +23,4 @@ Merger: Combine {r1} and {r2} into one report; add no new facts.
 - Key mismatch -> one constant per key, referenced in instructions.
 - Endless hand-offs -> `LoopAgent(max_iterations)` or explicit exit tool.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_07_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_07_*`.

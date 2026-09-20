@@ -25,4 +25,4 @@ Synthesize a comprehensive answer about {topic}. Use only the material above.
 - Merge invents facts -> instruct 'use only the material above'.
 - Shared mutable state -> pass results by return value/keys only.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_03_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_03_*`.

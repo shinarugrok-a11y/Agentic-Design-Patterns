@@ -23,4 +23,4 @@ Task: Price for AAPL? Use the 'Stock Price Lookup Tool'; if not found, say so.
 - Error strings as data -> raise exceptions.
 - Huge outputs -> summarise in the tool.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_05_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_05_*`.
