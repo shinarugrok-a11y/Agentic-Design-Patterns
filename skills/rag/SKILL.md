@@ -1,52 +1,43 @@
 ---
 name: rag
-description: Retrieve relevant chunks, augment the prompt, generate grounded answers. Answer from external or proprietary documents by retrieving top-k chunks and grounding the prompt in them. Do not use when the model's training knowledge suffices or when the corpus is tiny enough to fit in context.
+description: Retrieve top-k chunks and ground the answer. Use for large or changing corpora. Not when the corpus fits in context.
 role: [memory]
 chapter: 14
-token_cost_estimate: 340
-chains_with: [memory-management, tool-use, reasoning-techniques]
+token_cost_estimate: 194
+chains_with: [memory-management, reflection]
 ---
 
-# Knowledge Retrieval (RAG)
+# Knowledge Retrieval
 
 ## When to use
-- Facts are private, recent or domain-specific.
+- Corpus is large or changes often.
 - Answers must cite sources.
-- Corpus is too big for the context window.
-- Hallucination rate must drop.
+- Private or recent facts the model lacks.
 
 ## When NOT to use
-- General knowledge questions.
-- Corpus < a few pages: paste it in.
-- Need is conversational history, not documents: use `memory-management`.
+- Corpus fits in the prompt.
+- Question is general knowledge.
 
 ## Inputs
-- Document corpus
-- Chunking params (size, overlap)
-- Embedding model + vector store
 - Query
+- Indexed chunks (vector store)
 
 ## Outputs
-- Retrieved documents
 - Grounded answer
-- Citations/grounding metadata
+- Cited chunks
 
 ## Failure modes
-- Bad chunking splits the fact across chunks.
-- Retriever returns irrelevant top-k; model answers anyway.
-- Prompt lacks 'say I don't know'; hallucination persists.
-- Embedding model changed; index stale.
+- Bad chunking splits facts.
+- Irrelevant top-k, answer hallucinates.
+- Stale index.
 
 ## Minimal example
 ```python
-chunks = CharacterTextSplitter(chunk_size=500, chunk_overlap=50).split_documents(docs)
-retriever = VectorStore.from_documents(chunks, embedding).as_retriever()
-prompt = "Use only this context. If unknown say so. Q: {question}\nContext: {context}"
-graph: retrieve(question)->documents ; generate(documents)->answer
-# ADK: VSearchAgent(datastore_id=...); VertexAiRagMemoryService(rag_corpus=...)
+docs = retriever.invoke(query)                       # top-k chunks
+ctx = "\n".join(d.page_content for d in docs)
+answer = llm(f"Answer only from context; say 'unknown' otherwise.\n{ctx}\nQ: {query}")
 ```
 
 ## Next skills
-- If retrieved facts should persist as memory: load `memory-management`
-- If retrieval is a search tool call: load `tool-use`
-- If agent should validate/reconcile retrieved evidence: load `reasoning-techniques`
+- If retrieved facts must persist: load `memory-management`
+- If answer needs verification: load `reflection`

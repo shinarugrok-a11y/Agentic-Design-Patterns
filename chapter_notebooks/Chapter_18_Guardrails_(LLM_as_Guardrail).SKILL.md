@@ -1,53 +1,44 @@
 ---
 name: guardrails
-description: Layered input validation, output filtering and tool restrictions. Screen inputs, tool arguments and outputs against policy before the primary agent acts or responds. Do not rely on a single layer or on the primary model to police itself.
+description: Screen inputs, tool args and outputs against policy. Use for any exposed agent. Never rely on one layer.
 role: [safety]
 chapter: 18
-token_cost_estimate: 370
-chains_with: [human-in-the-loop, exception-handling, evaluation-monitoring]
+token_cost_estimate: 225
+chains_with: [human-in-the-loop, evaluation-monitoring]
 ---
 
-# Guardrails / Safety Patterns
+# Guardrails and Safety
 
 ## When to use
-- Customer-facing or content-generating agents.
-- Jailbreak/prompt-injection exposure.
-- Tool calls touch sensitive data or actions.
-- Brand, legal or compliance constraints.
+- Untrusted input reaches the agent.
+- Tools can take dangerous actions.
+- Output must meet policy.
 
 ## When NOT to use
-- Internal, read-only, low-risk automation.
-- Guardrail LLM is the same model as the primary (shared weaknesses).
-- Ambiguity should escalate to a human: use `human-in-the-loop`.
+- Never skip; keep layers cheap for trusted flows.
+- Self-policing alone is not a guardrail.
 
 ## Inputs
-- Policy directives
-- Input/tool args/output to screen
-- Structured verdict schema
+- Policy rules
+- Input, tool args, output
 
 ## Outputs
-- `safe|unsafe` or `compliant|non-compliant` verdict + reasoning
-- Blocked call error dict
-- Audit log
+- Structured verdict + reason
+- Safe response
 
 ## Failure modes
-- Verdict returned as prose; parser fails open.
-- Over-blocking legitimate requests (recall vs. precision).
-- Guardrail only on input; harmful output passes.
-- Policy list hard-coded; brands/competitors not updated.
+- Verdict as prose, not structured.
+- Over-blocking legitimate use.
+- Injection bypasses a single layer.
 
 ## Minimal example
 ```python
-def validate_tool_params(tool, args, tool_context) -> Optional[dict]:
-    if args.get("user_id_param") != tool_context.state.get("session_user_id"):
-        return {"status": "error", "error_message": "Tool call blocked"}
-    return None
-agent = Agent(before_tool_callback=validate_tool_params, tools=[...])
-# LLM guardrail: SAFETY_PROMPT -> {"decision": "safe|unsafe", "reasoning": ...}
-# validate with pydantic; on ambiguity default to safe/compliant
+def block(tool, args, ctx):
+    if tool.name == "run_shell" and "rm -rf" in args.get("cmd", ""):
+        return {"status": "blocked", "reason": "destructive"}
+agent = LlmAgent(name="safe", tools=[run_shell], before_tool_callback=block)
 ```
 
 ## Next skills
-- If borderline cases need a human: load `human-in-the-loop`
-- If blocked call needs a fallback: load `exception-handling`
-- If guardrail quality must be measured: load `evaluation-monitoring`
+- If blocked action needs a person: load `human-in-the-loop`
+- If block rates must be measured: load `evaluation-monitoring`

@@ -1,50 +1,43 @@
 ---
 name: routing
-description: Dynamic path selection. Classify an incoming request and dispatch it to the one handler, tool, or sub-agent that fits. Do not use when every request takes the same path or when all branches should run anyway.
+description: Dynamic path selection. Use to classify a request and dispatch one handler. Not when every request takes the same path.
 role: [planner, executor]
 chapter: 2
-token_cost_estimate: 340
-chains_with: [prompt-chaining, multi-agent, resource-aware-optimization]
+token_cost_estimate: 219
+chains_with: [multi-agent, resource-aware-optimization]
 ---
 
 # Routing
 
 ## When to use
-- Requests fall into distinct categories (booking vs. info vs. support).
-- Different inputs need different tools or specialist agents.
-- You want a cheap/fast path for simple cases and a heavy path for hard ones.
-- Triage must happen before any expensive work.
+- Requests fall into distinct categories.
+- Cheap path for easy cases, heavy path for hard ones.
+- Triage must precede expensive work.
 
 ## When NOT to use
-- All inputs follow one fixed pipeline: use `prompt-chaining`.
-- Every branch must run regardless: use `parallelization`.
-- Only 1 handler exists.
+- One fixed pipeline: use `prompt-chaining`.
+- Every branch must run: use `parallelization`.
 
 ## Inputs
-- User request or state
-- Set of named handlers with descriptions
-- Router (LLM, rules, or embeddings)
+- Request or state
+- Named handlers with descriptions
 
 ## Outputs
-- Selected route label
-- Handler result
-- Fallback result when unclear
+- Route label
+- Handler result (or fallback)
 
 ## Failure modes
-- Misclassification sends the request to the wrong handler silently.
-- No default/unclear branch: unhandled inputs crash or loop.
-- Router output not normalised (`' booker\n'` != `'booker'`).
-- Overlapping handler descriptions confuse LLM-driven delegation.
+- Silent misroute to the wrong handler.
+- No default branch for unclear input.
+- Router output not normalised (`' booker\n'`).
 
 ## Minimal example
 ```python
-decision = llm("Output one word: booker|info|unclear. Request: {req}").strip()
+route = llm("One word: booker|info|unclear. Request: {req}").strip()
 handlers = {"booker": book, "info": lookup}
-result = handlers.get(decision, handle_unclear)(req)
-# ADK: Agent(name="Coordinator", sub_agents=[booker, info]) -> auto-delegation
+result = handlers.get(route, handle_unclear)(req)
 ```
 
 ## Next skills
-- If a branch is itself multi-stage: load `prompt-chaining`
 - If routes are full specialist agents: load `multi-agent`
-- If routing by cost/complexity: load `resource-aware-optimization`
+- If routing is by cost tier: load `resource-aware-optimization`
