@@ -174,38 +174,40 @@ def main(sync=False):
         MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
         print("synced token_cost_estimate for", len(measured), "skills")
 
-    # Cold-start simulation for an executor-role agent:
-    # AGENTS.md -> skill index -> 2 SKILL.md -> 1 references file.
+    # Cold-start simulation, worst case per role:
+    # AGENTS.md -> role-sliced index -> 2 SKILL.md -> 1 references/patterns.md.
+    # Worst case picks the two largest cards and the largest references file in that role.
     route = tokens(agents.read_text()) if agents.is_file() else 0
     full_index = tokens(MANIFEST.read_text())
     # Same projection as the jq slice documented in AGENTS.md.
-    slice_fields = ("id", "when_to_use", "chains_with")
-    role_slice = [{k: s[k] for k in slice_fields if k in s}
-                  for s in skills if "executor" in s.get("role", [])]
-    slice_cost = tokens(json.dumps(role_slice, indent=2))
-    picks = ["prompt-chaining", "tool-use"]
-    skill_cost = sum(tokens((ROOT / "skills" / p / "SKILL.md").read_text())
-                     for p in picks
-                     if (ROOT / "skills" / p / "SKILL.md").is_file())
-    ref = ROOT / "skills" / picks[1] / "references" / "patterns.md"
-    ref_cost = tokens(ref.read_text()) if ref.is_file() else 0
-    lazy = route + slice_cost + skill_cost + ref_cost
-    eager = route + full_index + skill_cost + ref_cost
+    slice_fields = ("id", "when_to_use")
+    refs = {}
+    for rec in skills:
+        p = ROOT / "skills" / rec["id"] / "references" / "patterns.md"
+        refs[rec["id"]] = tokens(p.read_text()) if p.is_file() else 0
 
-    print(f"{'AGENTS.md':<34}{route:>6}")
-    print(f"{'manifest.json (full)':<34}{full_index:>6}")
-    print(f"{'manifest role slice (executor)':<34}{slice_cost:>6}"
-          f"  {len(role_slice)} records")
-    print(f"{'2 SKILL.md ' + str(picks):<34}{skill_cost:>6}")
-    print(f"{'1 references/patterns.md':<34}{ref_cost:>6}")
-    print(f"{'cold start, role slice':<34}{lazy:>6}  budget {LAZY_LOAD_BUDGET}")
-    print(f"{'cold start, full manifest':<34}{eager:>6}  (tooling path)")
+    print(f"{'AGENTS.md':<26}{route:>6}")
+    print(f"{'manifest.json (full)':<26}{full_index:>6}  tooling path, not cold start")
     if measured:
-        print(f"{'all 21 SKILL.md':<34}{sum(measured.values()):>6}"
+        print(f"{'all 21 SKILL.md':<26}{sum(measured.values()):>6}"
               f"  max {max(measured.values())}")
-    if lazy > LAZY_LOAD_BUDGET:
-        errors.append(f"role-slice cold start is {lazy} tokens "
-                      f"(budget {LAZY_LOAD_BUDGET})")
+        print(f"{'all 21 patterns.md':<26}{sum(refs.values()):>6}"
+              f"  max {max(refs.values())}")
+    print(f"\n{'role':<10}{'slice':>7}{'2 cards':>9}{'1 ref':>7}{'total':>8}"
+          f"  budget {LAZY_LOAD_BUDGET}")
+    for role in sorted(ROLES):
+        in_role = [s for s in skills if role in s.get("role", [])]
+        if not in_role:
+            continue
+        slice_cost = tokens(json.dumps(
+            [{k: s[k] for k in slice_fields if k in s} for s in in_role], indent=2))
+        two_cards = sum(sorted(measured.get(s["id"], 0) for s in in_role)[-2:])
+        worst_ref = max(refs.get(s["id"], 0) for s in in_role)
+        total = route + slice_cost + two_cards + worst_ref
+        print(f"{role:<10}{slice_cost:>7}{two_cards:>9}{worst_ref:>7}{total:>8}")
+        if total > LAZY_LOAD_BUDGET:
+            errors.append(f"worst-case {role} cold start is {total} tokens "
+                          f"(budget {LAZY_LOAD_BUDGET})")
 
     if errors:
         print("\nFAIL")
