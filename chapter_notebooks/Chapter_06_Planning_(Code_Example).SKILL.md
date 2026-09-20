@@ -1,51 +1,44 @@
 ---
 name: planning
-description: Decompose a goal into ordered steps before acting. Turn a high-level objective into an explicit, ordered list of sub-steps, then execute or delegate them. Do not use for single-action requests or when the steps are already fixed by a pipeline.
+description: Decompose a goal into ordered steps before acting. Use for multi-step goals with unclear path. Not for single actions.
 role: [planner]
 chapter: 6
-token_cost_estimate: 320
-chains_with: [goal-setting, prompt-chaining, prioritization]
+token_cost_estimate: 218
+chains_with: [goal-setting, multi-agent]
 ---
 
 # Planning
 
 ## When to use
-- Request needs several interdependent operations.
-- Steps are not known in advance and depend on the goal.
-- Plan must be visible for review before execution.
-- Long-horizon research or report generation.
+- Goal needs several dependent steps.
+- Path is not known up front; expect re-planning.
+- Steps must be visible and checkable.
 
 ## When NOT to use
-- One tool call answers it.
-- Pipeline is static: use `prompt-chaining`.
-- Budget is tiny; planning tokens exceed task tokens.
+- Task is one action or a fixed pipeline.
+- Plan quality cannot be judged: add `reflection`.
 
 ## Inputs
-- Goal statement
-- Available tools/skills
-- Constraints (time, budget)
+- Goal + constraints
+- Available tools/agents
 
 ## Outputs
-- Ordered plan (steps, dependencies)
-- Executed results per step
-- Revised plan on deviation
+- Ordered plan with dependencies
+- Execution log
 
 ## Failure modes
-- Plan is plausible but skips a required step; execution 'succeeds' incompletely.
-- Plan never revised when a step fails.
-- Over-planning: 20 steps for a 2-step task.
-- Steps reference tools the executor does not have.
+- Missing step discovered late.
+- Plan never revised after failure.
+- Over-planning trivial tasks.
 
 ## Minimal example
 ```python
-plan = llm("Goal: {goal}. Produce a numbered plan of <=7 steps with deps.")
-for step in parse(plan):
-    result = execute(step)          # tool-use / delegate to sub-agent
-    if failed(result): plan = llm(f"Revise plan given failure: {result}")
-# CrewAI: Task(description="1. plan  2. write from plan", expected_output=...)
+plan  = Task(description=f"Numbered step plan for: {goal}", agent=planner)
+write = Task(description="Execute the plan", agent=writer, context=[plan])
+Crew(agents=[planner, writer], tasks=[plan, write],
+     process=Process.sequential).kickoff()
 ```
 
 ## Next skills
 - If plan needs measurable success criteria: load `goal-setting`
-- If steps are fixed after planning: load `prompt-chaining`
-- If many candidate steps compete for resources: load `prioritization`
+- If steps are executed by agents: load `multi-agent`

@@ -1,52 +1,44 @@
 ---
 name: learning-adaptation
-description: Agent changes behaviour from experience (RL, self-modification, evolution). Let the agent update its strategies, prompts or code based on evaluated outcomes over many episodes. Do not use when behaviour must be fixed and auditable or when there is no reliable evaluator.
+description: Improve behaviour from evaluated outcomes. Use when episodes repeat and an evaluator exists. Not when behaviour must stay fixed.
 role: [memory, critic]
 chapter: 9
-token_cost_estimate: 300
-chains_with: [memory-management, reflection, evaluation-monitoring]
+token_cost_estimate: 204
+chains_with: [evaluation-monitoring, reflection]
 ---
 
 # Learning and Adaptation
 
 ## When to use
-- Environment shifts and static rules degrade.
-- A benchmark/evaluator can score each version.
-- Personalisation over long horizons.
-- Algorithm or prompt search (AlphaEvolve, OpenEvolve, SICA).
+- Task repeats and outcomes are scored.
+- Prompts, code or policies should improve over runs.
+- An evaluator or reward is available.
 
 ## When NOT to use
-- Regulated behaviour that must not drift.
-- No evaluator; 'learning' becomes random drift.
-- Single session; use `memory-management` instead.
+- Behaviour must stay fixed (compliance).
+- No evaluator: nothing to learn from.
 
 ## Inputs
-- Initial program/prompt
-- Evaluator returning metrics
-- Archive of past versions and scores
-- Iteration budget
+- Episode log with scores
+- Mutable artifact (prompt, code, policy)
 
 ## Outputs
-- Best-scoring version
-- Metrics per iteration
-- Archive
+- Improved artifact
+- Score history
 
 ## Failure modes
-- Reward hacking: metric improves, real quality does not.
-- Self-modification breaks the agent's own tooling.
-- Archive selects on noise; no held-out evaluation.
-- Cost: 1000 iterations x full evaluation.
+- Reward hacking on a proxy metric.
+- Self-edit breaks tooling.
+- Forgetting earlier gains.
 
 ## Minimal example
 ```python
-evolve = OpenEvolve(initial_program_path="prog.py",
-                    evaluation_file="evaluator.py", config_path="config.yaml")
-best = await evolve.run(iterations=1000)
-print(best.metrics)
-# SICA loop: pick best archived version -> self-edit code -> benchmark -> archive
+best = program
+for gen in range(N):
+    cand = llm(f"Improve for {metric}:\n{best}")
+    if evaluate(cand) > evaluate(best): best = cand   # keep only if better
 ```
 
 ## Next skills
-- If learned facts need storage: load `memory-management`
-- If single-output improvement is enough: load `reflection`
-- If you need the evaluator itself: load `evaluation-monitoring`
+- If a scoring rubric is needed: load `evaluation-monitoring`
+- If changes need review: load `reflection`

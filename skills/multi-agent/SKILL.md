@@ -1,51 +1,44 @@
 ---
 name: multi-agent
-description: Specialised agents cooperating via handoff, parallel, loop or hierarchy. Split a task across specialist agents with their own tools and instructions, coordinated by a defined interaction model. Do not use when one agent with the right tools can finish the task; coordination overhead is real.
+description: Specialist agents plus a coordination model. Use when roles differ. Not when one agent suffices.
 role: [planner, executor]
 chapter: 7
-token_cost_estimate: 340
-chains_with: [a2a, routing, parallelization]
+token_cost_estimate: 234
+chains_with: [a2a, routing]
 ---
 
 # Multi-Agent Collaboration
 
 ## When to use
-- Sub-tasks need different expertise, tools or system prompts.
-- Work maps to roles (researcher -> writer -> reviewer).
-- Coordinator should delegate rather than answer.
-- Loop until a state condition is met (`LoopAgent` + escalate).
+- Distinct roles (researcher, writer, reviewer).
+- Work is sequential, parallel or loop-shaped.
+- Specialists need different tools.
 
 ## When NOT to use
-- Single agent with 2-3 tools suffices.
-- Agents are on different frameworks/hosts: use `a2a`.
-- Latency budget cannot absorb multiple model calls.
+- One agent with tools suffices.
+- Coordination costs more than the task.
 
 ## Inputs
-- Role definitions (name, description, instruction, tools)
-- Interaction model (sequential | parallel | loop | coordinator)
-- Shared state keys
+- Role definitions + tools
+- Coordination model
 
 ## Outputs
-- Composed result
-- Per-agent outputs in state
-- Delegation trace
+- Combined result
+- Shared state keys
 
 ## Failure modes
-- Coordinator answers itself instead of delegating.
-- Ambiguous agent descriptions cause wrong delegation.
-- State key naming mismatch between writer and reader agent.
-- Loop never sets the exit condition; hits `max_iterations`.
+- Coordinator answers instead of delegating.
+- State key mismatch between agents.
+- Endless hand-offs.
 
 ## Minimal example
 ```python
-coordinator = LlmAgent(name="Coordinator", sub_agents=[booker, info],
-    instruction="Delegate only. Booking->Booker, else->Info.")
-pipeline = SequentialAgent(sub_agents=[fetch(output_key="data"), summarise])
-poller = LoopAgent(max_iterations=10, sub_agents=[step, ConditionChecker()])
-# ConditionChecker yields Event(actions=EventActions(escalate=True)) to stop
+r1 = LlmAgent(name="r1", output_key="r1", instruction="Research X")
+r2 = LlmAgent(name="r2", output_key="r2", instruction="Research Y")
+merge = LlmAgent(name="merge", instruction="Combine {r1} {r2}")
+root = SequentialAgent(sub_agents=[ParallelAgent(sub_agents=[r1, r2]), merge])
 ```
 
 ## Next skills
-- If agents span frameworks or hosts: load `a2a`
-- If coordinator logic is pure classification: load `routing`
-- If sub-agents are independent: load `parallelization`
+- If agents live in other processes: load `a2a`
+- If one specialist per request: load `routing`

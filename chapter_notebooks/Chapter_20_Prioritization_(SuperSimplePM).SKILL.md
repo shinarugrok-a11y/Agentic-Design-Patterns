@@ -1,53 +1,43 @@
 ---
 name: prioritization
-description: Rank tasks by urgency, importance, dependencies and cost. Order or triage competing tasks with explicit criteria and re-rank as conditions change. Do not use when there is one task or when order is fixed by dependencies alone.
+description: Rank tasks by urgency, importance, dependencies, cost. Use with competing tasks. Not for one task or fixed order.
 role: [planner]
 chapter: 20
-token_cost_estimate: 340
-chains_with: [planning, goal-setting, resource-aware-optimization]
+token_cost_estimate: 200
+chains_with: [planning, goal-setting]
 ---
 
 # Prioritization
 
 ## When to use
-- Many tasks, limited resources.
-- Urgency cues in natural language ('ASAP' -> P0).
-- Dynamic re-prioritisation on new events.
-- Assigning work to workers/queues.
+- Many tasks compete for limited resources.
+- Deadlines and dependencies differ.
+- Priorities change as new tasks arrive.
 
 ## When NOT to use
-- Single task.
-- Strict DAG already defines order: use `planning`.
-- Model/cost selection is the real problem: use `resource-aware-optimization`.
+- One task, or order fixed by dependencies.
+- All tasks are equal and cheap.
 
 ## Inputs
-- Task list
-- Criteria (urgency, importance, deps, cost)
-- Priority scale (P0-P2)
-- Available workers
+- Task list with attributes
+- Scoring criteria
 
 ## Outputs
-- Ranked/assigned tasks
-- Defaults for missing fields
-- Updated task board
+- Ordered task list
+- Rationale per task
 
 ## Failure modes
-- Everything becomes P0.
-- Priority set before task exists (tool ordering).
-- Invalid priority value accepted.
-- No re-prioritisation when context changes.
+- Everything is P0.
+- Priority set before the task exists.
+- Stale ranking after new input.
 
 ## Minimal example
 ```python
-tools = [create_new_task, assign_priority_to_task, assign_task_to_worker, list_all_tasks]
-SYSTEM = """1. create_new_task first to get an id.
-2. Map 'urgent/ASAP/critical' -> P0 via assign_priority_to_task.
-3. Assign worker if named; else default P1 + 'Worker A'.
-4. list_all_tasks to show final state."""
-agent = AgentExecutor(agent=create_react_agent(llm, tools, prompt), tools=tools)
+def score(t): return 3*t.urgency + 2*t.importance - t.cost + t.blocks
+ordered = sorted(tasks, key=score, reverse=True)
+# LLM variant: create_new_task -> assign_priority -> list_tasks
 ```
 
 ## Next skills
-- If ranked tasks need step decomposition: load `planning`
-- If priorities derive from goals: load `goal-setting`
-- If ranking is about cost tiers: load `resource-aware-optimization`
+- If ranked tasks become a plan: load `planning`
+- If goals define importance: load `goal-setting`

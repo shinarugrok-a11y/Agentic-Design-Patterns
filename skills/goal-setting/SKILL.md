@@ -1,52 +1,44 @@
 ---
 name: goal-setting
-description: Explicit measurable goals plus a progress check loop. Define SMART goals up front and iterate generate -> evaluate -> judge-goals-met until satisfied or budget spent. Do not use when success is not definable or when a single pass is acceptable.
+description: Measurable goals with a judge loop. Use when success must be checked. Not when success is undefinable.
 role: [planner]
 chapter: 11
-token_cost_estimate: 330
-chains_with: [planning, evaluation-monitoring, reflection]
+token_cost_estimate: 217
+chains_with: [reflection, prioritization]
 ---
 
 # Goal Setting and Monitoring
 
 ## When to use
-- Task has a checklist of success criteria.
-- Agent must run unattended and know when it is done.
-- Progress must be observable (state, tool outputs).
-- Course correction is expected mid-task.
+- Success has checkable criteria.
+- Work should stop when goals are met.
+- Progress must be reported per goal.
 
 ## When NOT to use
-- Success is subjective and unmeasurable.
-- One-shot response is fine.
-- Criteria are enforced externally: use `evaluation-monitoring`.
+- Success cannot be defined.
+- Single-shot task; no monitoring needed.
 
 ## Inputs
-- Goal list (specific, measurable)
-- Max iterations
-- Evaluator/judge prompt
+- Goals list
+- Judge function or rubric
 
 ## Outputs
 - Artifact meeting goals
-- Per-iteration feedback
-- Boolean goals_met
+- Per-goal status
 
 ## Failure modes
-- Judge returns prose instead of `True`/`False`; loop never terminates.
-- Goals conflict (simple vs. exhaustive edge cases).
-- Iteration cap hit silently; unmet goals not reported.
-- Goals not restated each iteration; drift.
+- Judge not boolean: loop never ends.
+- Conflicting goals.
+- Max iterations undefined.
 
 ## Minimal example
 ```python
-goals = ["simple", "handles edge cases", "positive int only"]
-for i in range(5):
-    code = llm(prompt(use_case, goals, prev_code, feedback))
-    feedback = llm(f"Critique vs goals {goals}:\n{code}")
-    if llm(f"Goals met? Answer True/False.\n{feedback}").strip().lower() == "true": break
-    prev_code = code
+for i in range(max_iter):
+    code = llm(f"Goals: {goals}\nFeedback: {fb}\nWrite code")
+    fb = llm(f"Critique vs goals:\n{code}")
+    if llm(f"All goals met? True/False\n{code}\n{goals}").strip() == "True": break
 ```
 
 ## Next skills
-- If goals need decomposition into steps: load `planning`
-- If judging needs a rubric or metrics: load `evaluation-monitoring`
-- If critique/refine is the core loop: load `reflection`
+- If the critique loop needs detail: load `reflection`
+- If goals need ranking: load `prioritization`

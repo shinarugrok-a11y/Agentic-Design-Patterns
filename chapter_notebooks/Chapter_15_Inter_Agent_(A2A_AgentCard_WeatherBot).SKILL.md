@@ -1,52 +1,43 @@
 ---
 name: a2a
-description: HTTP protocol for agents to discover and delegate to each other. Coordinate agents built on different frameworks or hosts via Agent Cards and `tasks/send` / `tasks/sendSubscribe`. Do not use for agents in the same process and framework; in-process sub-agents are simpler.
+description: Delegate to remote agents via Agent Cards. Use across processes or vendors. Not for in-process agents.
 role: [executor, planner]
 chapter: 15
-token_cost_estimate: 380
-chains_with: [multi-agent, mcp, routing]
+token_cost_estimate: 221
+chains_with: [multi-agent, exception-handling]
 ---
 
-# Inter-Agent Communication (A2A)
+# Inter-Agent Communication
 
 ## When to use
-- Agents on different frameworks (ADK, LangGraph, CrewAI).
-- Remote agent must be discovered by capability.
-- Long-running tasks need streaming or `input-required` state.
-- Modular deployment on separate ports/hosts.
+- Agents run in different processes or vendors.
+- Capabilities must be discoverable (Agent Card).
+- Long tasks need streaming or push updates.
 
 ## When NOT to use
-- All agents in one process: use `multi-agent`.
-- Peer is a tool/data source, not an agent: use `mcp`.
-- No auth/mTLS possible for the transport.
+- Agents share one process: use `multi-agent`.
+- Calling tools, not agents: use `mcp`.
 
 ## Inputs
-- Agent Card (name, url, skills, auth, capabilities)
-- Task message with parts
-- Session id
+- Agent Card URL
+- Task message (JSON-RPC)
 
 ## Outputs
-- Task result / streamed updates
-- Task state (completed | input-required | failed)
-- Discovered remote skills
+- Task id + status
+- Artifacts from the remote agent
 
 ## Failure modes
-- Agent Card advertises a skill the executor cannot fulfil.
-- Sync `tasks/send` used for a long task; client times out.
-- Missing auth scheme; open endpoint.
-- Session id not reused; multi-turn context lost.
+- Card overstates skills.
+- Sync call times out on long tasks.
+- No auth on the endpoint.
 
 ## Minimal example
 ```python
-card = AgentCard(name="Calendar Agent", url=f"http://{host}:{port}/", version="1.0.0",
-    capabilities=AgentCapabilities(streaming=True), skills=[AgentSkill(id="check_availability", ...)])
-app = A2AStarletteApplication(agent_card=card,
-    http_handler=DefaultRequestHandler(agent_executor=ADKAgentExecutor(runner, card),
-                                       task_store=InMemoryTaskStore()))
-# client: {"jsonrpc":"2.0","method":"sendTask","params":{"id":..,"message":{...}}}
+card = requests.get(f"{url}/.well-known/agent.json").json()
+resp = requests.post(url, json={"jsonrpc": "2.0", "id": 1,
+    "method": "message/send", "params": {"message": msg}})
 ```
 
 ## Next skills
-- If agents are co-located: load `multi-agent`
-- If peer exposes tools, not tasks: load `mcp`
-- If which remote agent to call: load `routing`
+- If remote agents need a coordinator: load `multi-agent`
+- If remote call can fail: load `exception-handling`

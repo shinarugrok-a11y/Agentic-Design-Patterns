@@ -1,54 +1,44 @@
 ---
 name: memory-management
-description: Short-term session state plus long-term searchable memory. Persist conversation context in session state and store durable facts in a searchable long-term store. Do not use for one-shot, stateless requests where nothing must survive the call.
+description: Session state plus searchable long-term memory. Use for multi-turn or cross-session context. Not for stateless requests.
 role: [memory]
 chapter: 8
-token_cost_estimate: 370
-chains_with: [rag, learning-adaptation, mcp]
+token_cost_estimate: 215
+chains_with: [rag, learning-adaptation]
 ---
 
 # Memory Management
 
 ## When to use
-- Multi-turn conversation must keep context.
-- Track progress of a multi-step task across calls.
-- Personalise from user preferences or history.
-- Facts must survive across sessions (vector store, DB).
+- Multi-turn tasks need earlier facts.
+- Cross-session personalisation.
+- Agents share state via keys.
 
 ## When NOT to use
-- Single question, single answer.
-- Knowledge is external documents, not interaction history: use `rag`.
-- Privacy rules forbid retaining user data.
+- Stateless one-shot requests.
+- Corpus retrieval, not conversation: use `rag`.
 
 ## Inputs
-- Session id / user id
-- Events (messages, tool results)
-- State deltas
-- Memory queries
+- Session id
+- State updates (output_key, tool_context.state)
 
 ## Outputs
-- Current session state dict
-- Retrieved long-term memories
-- Updated store
+- Session state dict
+- Memory search results
 
 ## Failure modes
-- Mutating `session.state` directly instead of via `output_key`/`state_delta`; changes not persisted.
-- Context window fills with raw history; no summarisation.
-- No namespace/prefix (`user:`, `app:`, `temp:`); data leaks across scopes.
-- In-memory service used in prod; memory lost on restart.
+- State mutated directly instead of via events.
+- Raw history overflows the context window.
+- In-memory service loses data on restart.
 
 ## Minimal example
 ```python
-agent = LlmAgent(name="Greeter", instruction=..., output_key="last_greeting")
-def log_login(tool_context: ToolContext) -> dict:
-    s = tool_context.state
-    s["user:login_count"] = s.get("user:login_count", 0) + 1
-    s["temp:validation_needed"] = True
-# long-term: store.put((user_id, ctx), key, {...}); store.search(ns, query=...)
-# LangChain: ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+agent = LlmAgent(name="greeter", output_key="last_greeting")
+runner = Runner(agent=agent, session_service=InMemorySessionService(),
+                memory_service=InMemoryMemoryService())
+# later turn: tool_context.state["user:pref"] = "dark"; memory.search("pref")
 ```
 
 ## Next skills
-- If memory is a document corpus: load `rag`
-- If stored experience should change behaviour: load `learning-adaptation`
-- If memory service is remote: load `mcp`
+- If recall comes from documents: load `rag`
+- If memory feeds behaviour change: load `learning-adaptation`

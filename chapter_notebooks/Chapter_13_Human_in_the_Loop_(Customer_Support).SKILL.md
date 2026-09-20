@@ -1,52 +1,45 @@
 ---
 name: human-in-the-loop
-description: Escalate, confirm or collect feedback from a human at defined points. Insert a human checkpoint when an action is high-stakes, ambiguous, irreversible or outside the agent's confidence. Do not use for high-volume routine decisions where human review cannot scale.
+description: Human confirmation at high stakes. Use for irreversible or ambiguous actions. Not for routine volume.
 role: [safety]
 chapter: 13
-token_cost_estimate: 340
-chains_with: [guardrails, exception-handling, evaluation-monitoring]
+token_cost_estimate: 231
+chains_with: [guardrails, exception-handling]
 ---
 
 # Human-in-the-Loop
 
 ## When to use
-- Irreversible actions (payments, deletes, sends).
-- Low-confidence or emotionally charged cases.
-- Policy requires human sign-off (legal, medical, finance).
-- Human labels/feedback improve the agent later.
+- Action is irreversible (payment, delete, send).
+- Low confidence or unclear policy.
+- Regulation requires sign-off.
 
 ## When NOT to use
-- Thousands of routine decisions per minute.
-- Human has no more context than the agent.
-- Automated fallback suffices: use `exception-handling`.
+- High-volume routine decisions.
+- No human is available in time.
 
 ## Inputs
-- Escalation policy (when to hand off)
-- Escalation tool/channel
-- Customer/context state for the human
+- Proposed action + context
+- Escalation channel
 
 ## Outputs
-- Escalated case with context
-- Human decision fed back
-- Audit trail
+- Approved or rejected action
+- Audit record
 
 ## Failure modes
-- Escalation criteria too broad: everything is escalated.
-- Handoff loses context; human restarts from zero.
-- No timeout; agent blocks forever waiting.
-- Confirmation prompt is ambiguous; user approves the wrong action.
+- Over-escalation fatigues reviewers.
+- Context lost at hand-off.
+- Approval assumed on timeout.
 
 ## Minimal example
 ```python
 def escalate_to_human(issue_type: str) -> dict:
-    return {"status": "success", "message": f"Escalated {issue_type}"}
-support = Agent(instruction="""Troubleshoot -> create_ticket if unresolved.
-For complex issues beyond basic steps: escalate_to_human.""",
-    tools=[troubleshoot_issue, create_ticket, escalate_to_human])
-# before_model_callback can inject state["customer_info"] for personalisation
+    """Escalate refunds, threats or unclear policy to a person."""
+    return {"status": "escalated", "issue": issue_type}
+agent = LlmAgent(name="support", tools=[troubleshoot, escalate_to_human],
+    instruction="If unsure or asked for a refund, escalate.")
 ```
 
 ## Next skills
-- If inputs must be screened before the agent acts: load `guardrails`
-- If failure can be handled automatically: load `exception-handling`
-- If human feedback should be measured: load `evaluation-monitoring`
+- If high stakes must be defined by policy: load `guardrails`
+- If the non-escalated path must recover alone: load `exception-handling`
