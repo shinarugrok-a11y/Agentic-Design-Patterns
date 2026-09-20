@@ -1,59 +1,49 @@
-"""Planning: decompose a goal into a dependency-ordered plan, execute it, and replan when a step's success test fails.
+"""Planning: decompose a goal into ordered steps, execute, re-plan on failure.
 
-Real framework: CrewAI Task(description="1. Create a plan... 2. Execute it") run by Crew(process=Process.sequential)
-Run: python3 examples/minimal.py
+Offline stub. `make_plan` and `replan` stand in for LLM calls that return a
+JSON plan; `execute` stands in for tool-use or sub-agent delegation.
 """
-
-TOOLS = {"search": "3 sources found", "draft": "600-word draft"}
-
-
-def llm(goal: str, failure: dict = None) -> list:
-    """Fake planner: first plan invents a tool that does not exist; the replan drops it."""
-    plan = [
-        {"id": 1, "action": "search", "depends_on": [], "done_when": "3 sources found"},
-        {"id": 2, "action": "translate", "depends_on": [1], "done_when": "text in French"},
-        {"id": 3, "action": "draft", "depends_on": [1], "done_when": "600-word draft"},
-    ]
-    if failure:
-        plan = [s for s in plan if s["action"] in TOOLS]
-    return plan
+from dataclasses import dataclass, field
 
 
-def topological_order(plan: list) -> list:
-    ordered, done = [], set()
-    for _ in range(len(plan)):
-        for step in plan:
-            if step["id"] not in done and set(step["depends_on"]) <= done:
-                ordered.append(step)
-                done.add(step["id"])
-    return ordered
+@dataclass
+class Step:
+    id: int
+    action: str
+    depends_on: list[int] = field(default_factory=list)
 
 
-def execute(step):
-    return TOOLS.get(step["action"], f"no tool named {step['action']!r}")
+def make_plan(goal: str) -> list[Step]:
+    return [Step(1, "search sources"), Step(2, "extract key facts", [1]),
+            Step(3, "draft report", [2]), Step(4, "add citations", [1, 3])]
 
 
-def meets(done_when, result):
-    return done_when == result
+def execute(step: Step, state: dict) -> tuple[bool, str]:
+    if step.action == "search sources" and not state.get("retried"):
+        return False, "search API timeout"          # first attempt fails
+    return True, f"done: {step.action}"
 
 
-goal = "Write a short research note"
-plan, satisfied = llm(goal), set()
-for attempt in range(2):
-    replanned = False
-    for step in topological_order(plan):
-        if step["action"] in satisfied:
+def replan(plan: list[Step], failed: Step, state: dict) -> list[Step]:
+    state["retried"] = True
+    return plan                                      # simple retry policy
+
+
+def run(goal: str) -> dict:
+    plan, state, i = make_plan(goal), {}, 0
+    while i < len(plan):
+        step = plan[i]
+        assert all(d in state for d in step.depends_on), "dependency not satisfied"
+        ok, result = execute(step, state)
+        if not ok:
+            print(f"step {step.id} failed ({result}); re-planning")
+            plan = replan(plan, step, state)
             continue
-        result = execute(step)
-        if meets(step["done_when"], result):
-            print(f"step {step['id']} {step['action']}: {result}")
-            satisfied.add(step["action"])
-        else:
-            print(f"step {step['id']} {step['action']}: {result} -- done_when unmet, replanning")
-            plan = llm(goal, failure=step)
-            replanned = True
-            break
-    if not replanned:
-        break
+        state[step.id] = result
+        i += 1
+    return state
 
-print("goal reached via:", sorted(satisfied))
+
+if __name__ == "__main__":
+    for k, v in run("Write a cited report on topic X").items():
+        print(k, v)

@@ -1,43 +1,41 @@
-"""Two-stage chain: extract specs from prose, then transform them into JSON.
+"""Prompt chaining: two-stage extract -> transform pipeline.
 
-Real framework: LangChain LCEL
-  extract = prompt_extract | llm | StrOutputParser()
-  chain = {"specifications": extract} | prompt_transform | llm | StrOutputParser()
-Run: python3 examples/minimal.py
+Runs without any API key using a stub LLM. Swap `llm` for a real model
+(e.g. `ChatOpenAI(temperature=0)` piped through LCEL) in production.
 """
-
 import json
-
-PROMPT_EXTRACT = "Extract the technical specifications from:\n\n{text_input}"
-PROMPT_TRANSFORM = (
-    "Transform these specifications into a JSON object with 'cpu', 'memory',"
-    " and 'storage' as keys:\n\n{specifications}"
-)
+import re
 
 
 def llm(prompt: str) -> str:
-    """Canned stand-in for a model call; keyed on which stage prompt it sees."""
+    """Stub model: deterministic behaviour for the two stage prompts."""
     if prompt.startswith("Extract"):
-        return "CPU: 3.5 GHz octa-core; Memory: 16GB RAM; Storage: 1TB NVMe SSD"
-    return json.dumps({"cpu": "3.5 GHz octa-core", "memory": "16GB", "storage": "1TB NVMe SSD"})
+        text = prompt.split("\n\n", 1)[1]
+        cpu = re.search(r"([\d.]+ GHz [\w-]+)", text)
+        mem = re.search(r"(\d+GB)", text)
+        sto = re.search(r"(\d+TB \w+ SSD)", text)
+        return f"cpu={cpu.group(1)}; memory={mem.group(1)}; storage={sto.group(1)}"
+    if prompt.startswith("Transform"):
+        specs = prompt.split("\n\n", 1)[1]
+        pairs = dict(p.split("=", 1) for p in specs.split("; "))
+        return json.dumps(pairs)
+    raise ValueError("unknown stage")
 
 
-def extract(text_input: str) -> str:
-    return llm(PROMPT_EXTRACT.format(text_input=text_input))
+def stage_extract(text_input: str) -> str:
+    return llm(f"Extract the technical specifications from the following text:\n\n{text_input}")
 
 
-def transform(specifications: str) -> str:
-    return llm(PROMPT_TRANSFORM.format(specifications=specifications))
+def stage_transform(specifications: str) -> str:
+    return llm("Transform the following specifications into a JSON object with "
+               f"'cpu', 'memory', and 'storage' as keys:\n\n{specifications}")
 
 
-raw_text = "The new laptop features a 3.5 GHz octa-core processor, 16GB of RAM, and a 1TB NVMe SSD."
+def chain(text_input: str) -> dict:
+    specs = stage_extract(text_input)          # stage 1 output ...
+    return json.loads(stage_transform(specs))  # ... is stage 2 input
 
-# Stage 1 output becomes stage 2 input; validate at the seam so a bad
-# extraction fails here instead of being confidently reformatted downstream.
-specs = extract(raw_text)
-print("stage 1 (extract):", specs)
-assert ":" in specs, "stage 1 produced no parseable specifications"
 
-result = transform(specs)
-print("stage 2 (transform):", result)
-print("parsed:", json.loads(result))
+if __name__ == "__main__":
+    raw = "The new laptop features a 3.5 GHz octa-core processor, 16GB of RAM, and a 1TB NVMe SSD."
+    print(chain(raw))

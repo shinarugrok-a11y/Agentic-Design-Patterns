@@ -1,48 +1,52 @@
-"""Tool Use: the model emits a structured tool call, the runtime executes it, the result grounds the answer.
+"""Tool use: model emits a structured call, runtime executes it, result returns.
 
-Real framework: LangChain @tool + create_tool_calling_agent + AgentExecutor.invoke({"input": q})
-Run: python3 examples/minimal.py
+Offline stub of the function-calling loop. In production `decide` is the
+model with tool schemas bound; everything else is identical.
 """
+import inspect
 import json
-
-TOOLS = {}
-
-
-def tool(fn):
-    """Register a function as a declared tool, like @tool in LangChain or CrewAI."""
-    TOOLS[fn.__name__] = fn
-    return fn
+from typing import Callable, Dict
 
 
-@tool
-def get_weather(city: str) -> str:
-    """Return current weather for a city. Use for live conditions only."""
-    return {"london": "cloudy, 15C", "paris": "sunny, 22C"}.get(city.lower(), "unknown")
+def get_stock_price(ticker: str) -> float:
+    """Return the latest simulated price for a ticker. Raises ValueError if unknown."""
+    prices = {"AAPL": 178.15, "GOOGL": 1750.30, "MSFT": 425.50}
+    if ticker.upper() not in prices:
+        raise ValueError(f"ticker '{ticker}' not found")
+    return prices[ticker.upper()]
 
 
-def llm(question: str, scratchpad: list) -> str:
-    """Fake model: requests a tool, then answers once a tool result is on the scratchpad."""
-    if scratchpad:
-        return json.dumps({"final": f"It is currently {scratchpad[-1]} in London."})
-    if "weather" in question.lower():
-        return json.dumps({"tool": "get_weather", "args": {"city": "London"}})
-    return json.dumps({"final": "I can answer that from context alone."})
+TOOLS: Dict[str, Callable] = {"get_stock_price": get_stock_price}
 
 
-def agent_executor(question: str, max_steps: int = 3) -> str:
-    scratchpad = []
-    for step in range(max_steps):
-        decision = json.loads(llm(question, scratchpad))
-        if "final" in decision:
-            return decision["final"]
-        name, args = decision["tool"], decision["args"]
-        print(f"step {step}: model requested {name}({args})")
-        result = TOOLS[name](**args)  # the runtime calls the API, not the model
-        print(f"step {step}: tool returned {result!r}")
-        scratchpad.append(result)
-    return "stopped: step budget exhausted"
+def tool_schemas() -> list[dict]:
+    """What the model sees: name, description (docstring) and parameters."""
+    return [{"name": n, "description": inspect.getdoc(f),
+             "parameters": list(inspect.signature(f).parameters)} for n, f in TOOLS.items()]
 
 
-question = "What's the weather in London?"
-print(f"Q: {question}")
-print(f"A: {agent_executor(question)}")
+def decide(user_input: str) -> dict | None:
+    """Stand-in for the LLM choosing a tool. Returns a structured call or None."""
+    for word in user_input.replace("?", "").split():
+        if word.isupper() and word.isalpha():
+            return {"name": "get_stock_price", "args": {"ticker": word}}
+    return None
+
+
+def run(user_input: str) -> str:
+    call = decide(user_input)
+    if call is None:
+        return "No tool needed; answering from model knowledge."
+    try:
+        result = TOOLS[call["name"]](**call["args"])
+        observation = {"status": "success", "result": result}
+    except ValueError as e:                     # expected failure -> structured, not swallowed
+        observation = {"status": "error", "error_message": str(e)}
+    # The observation is fed back to the model for the final answer.
+    return f"call={json.dumps(call)} -> observation={json.dumps(observation)}"
+
+
+if __name__ == "__main__":
+    print(json.dumps(tool_schemas(), indent=2))
+    print(run("What is the price of AAPL?"))
+    print(run("What is the price of ZZZZ?"))

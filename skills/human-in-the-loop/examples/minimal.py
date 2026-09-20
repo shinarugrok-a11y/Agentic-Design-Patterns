@@ -1,52 +1,51 @@
-"""Human approval gate: risky proposals stop for a redacted review before execution.
+"""Human-in-the-loop: escalation policy + confirmation gate for risky actions.
 
-Real framework: Google ADK `escalate_to_human` tool on an Agent, with a
-before_model_callback that redacts state before the reviewer sees it.
-Run: python3 examples/minimal.py
+Offline stub. `ask_human` is replaced by a real channel (UI, ticket queue,
+chat). Silence or timeout is never treated as approval.
 """
-
-THRESHOLD = 0.6
-AUDIT = []
+from dataclasses import dataclass
 
 
-def llm(prompt: str) -> dict:
-    """Fake planner: returns a proposed action with a risk score."""
-    risky = "delete" in prompt or "refund" in prompt
-    return {
-        "summary": f"execute: {prompt}",
-        "effects": "drops 12k rows" if risky else "sends one email",
-        "risk": 0.9 if risky else 0.1,
-        "contact": "ada@example.com",
-    }
+@dataclass
+class Action:
+    name: str
+    target: str
+    irreversible: bool
+    confidence: float
 
 
-def redact(proposal: dict) -> dict:
-    return {**proposal, "contact": "[REDACTED]"}
+def should_escalate(action: Action, threshold: float = 0.8) -> str | None:
+    if action.irreversible:
+        return "irreversible action requires confirmation"
+    if action.confidence < threshold:
+        return f"low confidence ({action.confidence:.2f} < {threshold})"
+    return None
 
 
-def reviewer_ask(proposal: dict) -> str:
-    """Canned human: approves anything that is not a deletion."""
-    print(f"  REVIEW  {proposal['summary']} | effects={proposal['effects']} "
-          f"| contact={proposal['contact']}")
-    return "reject: needs a backup first" if "drops" in proposal["effects"] else "approve"
+def ask_human(prompt: str, scripted_reply: str | None) -> str:
+    """Stand-in for a real human channel; None simulates a timeout."""
+    print("HUMAN? " + prompt)
+    return scripted_reply or "TIMEOUT"
 
 
-def handle(request: str) -> str:
-    proposal = llm(request)
-    decision = "auto-approve"
-    if proposal["risk"] >= THRESHOLD:
-        decision = reviewer_ask(redact(proposal))
-        if not decision.startswith("approve"):
-            AUDIT.append((proposal["summary"], decision))
-            return f"ABORTED ({decision})"
-    result = f"EXECUTED ({proposal['effects']})"
-    AUDIT.append((proposal["summary"], decision))
-    return result
+def execute(action: Action) -> str:
+    return f"executed {action.name} on {action.target}"
 
 
-for req in ["send the welcome note", "delete the stale accounts"]:
-    print(f"{req!r} -> {handle(req)}")
+def run(action: Action, context: dict, scripted_reply: str | None = None) -> str:
+    reason = should_escalate(action)
+    if reason is None:
+        return execute(action)
+    handoff = (f"{reason}. Proposed: {action.name} on {action.target}. "
+               f"Context: {context}. Reply APPROVE to proceed.")
+    reply = ask_human(handoff, scripted_reply)
+    if reply.strip().upper() == "APPROVE":
+        return execute(action) + " (human approved)"
+    return f"no-op: awaiting human decision (reply={reply!r}); case logged"
 
-print(f"audit records: {len(AUDIT)}")
-for summary, decision in AUDIT:
-    print(f"  {decision:<28} {summary}")
+
+if __name__ == "__main__":
+    ctx = {"customer": "Jane", "tier": "gold", "steps_tried": ["restart", "reinstall"]}
+    print(run(Action("send_email", "jane@example.com", irreversible=False, confidence=0.95), ctx))
+    print(run(Action("refund", "order-42", irreversible=True, confidence=0.99), ctx, scripted_reply="APPROVE"))
+    print(run(Action("delete_account", "jane", irreversible=True, confidence=0.99), ctx))

@@ -1,53 +1,41 @@
-"""Fan out independent branches concurrently, drop failures, then synthesize.
+"""Parallelization: fan out independent branches, join, then synthesise.
 
-Real framework: LangChain LCEL RunnableParallel({...}) | synthesis_prompt | llm
-  (Google ADK equivalent: ParallelAgent(sub_agents=[...]) followed by a merger agent)
-Run: python3 examples/minimal.py
+Offline stub. Replace `branch_*` with real LLM/tool coroutines; the shape
+(asyncio.gather -> keyed results -> synthesis) stays the same.
 """
-
 import asyncio
 
 
-def llm(prompt: str) -> str:
-    return f"[canned answer to {prompt!r}]"
+async def branch_summary(topic: str) -> str:
+    await asyncio.sleep(0.2)
+    return f"Summary of {topic}."
 
 
-async def summarize(topic: str) -> str:
-    await asyncio.sleep(0.05)  # stands in for an API round trip
-    return llm(f"Summarize: {topic}")
+async def branch_questions(topic: str) -> str:
+    await asyncio.sleep(0.2)
+    return f"Q1/Q2/Q3 about {topic}."
 
 
-async def questions(topic: str) -> str:
-    await asyncio.sleep(0.05)
-    return llm(f"Three questions about: {topic}")
+async def branch_terms(topic: str) -> str:
+    await asyncio.sleep(0.2)
+    return "term-a, term-b, term-c"
 
 
-async def key_terms(topic: str) -> str:
-    await asyncio.sleep(0.05)
-    raise RuntimeError("terms branch hit a rate limit")
-
-
-BRANCHES = {"summary": summarize, "questions": questions, "key_terms": key_terms}
-
-
-def synthesize(results: dict, missing: list) -> str:
-    body = " | ".join(f"{k}={v}" for k, v in results.items())
-    return llm(f"Synthesize [{body}] noting missing sources: {missing or 'none'}")
+def synthesise(results: dict) -> str:
+    # In production this is an LLM prompt told to ground ONLY on `results`.
+    return ("## Report\n"
+            f"- Summary: {results['summary']}\n"
+            f"- Questions: {results['questions']}\n"
+            f"- Key terms: {results['key_terms']}\n"
+            f"- Topic: {results['topic']}")
 
 
 async def run(topic: str) -> str:
-    results = await asyncio.gather(*(fn(topic) for fn in BRANCHES.values()),
-                                   return_exceptions=True)
-    ok, missing = {}, []
-    for name, result in zip(BRANCHES, results):
-        if isinstance(result, Exception):
-            missing.append(name)
-            print(f"branch {name}: FAILED ({result})")
-        else:
-            ok[name] = result
-            print(f"branch {name}: ok")
-    # Partial failure is explicit: the aggregator still runs and is told what is absent.
-    return synthesize(ok, missing)
+    summary, questions, terms = await asyncio.gather(
+        branch_summary(topic), branch_questions(topic), branch_terms(topic))
+    results = {"summary": summary, "questions": questions, "key_terms": terms, "topic": topic}
+    return synthesise(results)
 
 
-print("merged:", asyncio.run(run("the history of space exploration")))
+if __name__ == "__main__":
+    print(asyncio.run(run("The history of space exploration")))

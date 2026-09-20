@@ -1,40 +1,39 @@
-"""ReAct loop: think, act, observe, repeat under a step cap, breaking on repeats.
+"""Reasoning techniques: ReAct loop (Thought -> Action -> Observation) with a
+bounded number of steps, plus a labelled CoT trace separated from the answer.
 
-Real framework: LangGraph cycle where a reflection node routes back to the
-research node via add_conditional_edges until it routes to finalize_answer.
-Run: python3 examples/minimal.py
+Offline stub: `think` is a scripted stand-in for the model.
 """
-
-MAX_STEPS = 6
 TOOLS = {
-    "search": lambda q: "Ada Lovelace was born in 1815." if "born" in q else "no hits",
-    "calc": lambda q: str(2026 - 1815),
+    "search": lambda q: {"population of earth": "about 8 billion"}.get(q.lower(), "no result"),
+    "calc": lambda expr: str(eval(expr, {"__builtins__": {}})),
 }
+MAX_STEPS = 5
 
 
-def llm_step(history):
-    """Fake reasoner: picks the next action from what has been observed so far."""
-    seen = " ".join(history)
-    if "1815" not in seen:
-        return "I need her birth year.", ("search", "when was Ada Lovelace born")
-    if "211" not in seen:
-        return "Now subtract from this year.", ("calc", "2026 - 1815")
-    return "I have everything.", ("final", "Ada Lovelace would be 211 years old.")
+def think(question: str, scratchpad: list[str]) -> dict:
+    """Stand-in for the model. Returns an action or a final answer."""
+    if not scratchpad:
+        return {"thought": "I need the population first.", "action": "search", "input": "population of earth"}
+    if len(scratchpad) == 1:
+        return {"thought": "Half of 8 billion is needed.", "action": "calc", "input": "8_000_000_000 / 2"}
+    return {"thought": "I have everything.", "final": "Roughly 4 billion people."}
 
 
-history, tried = [], set()
-for step in range(MAX_STEPS):
-    thought, (name, args) = llm_step(history)
-    print(f"step {step}\n  thought: {thought}\n  action: {name}({args!r})")
-    if name == "final":
-        print(f"  answer: {args}")
-        break
-    if (name, args) in tried:
-        print("  loop detected, stopping")
-        break
-    tried.add((name, args))
-    observation = TOOLS[name](args)
-    print(f"  observation: {observation}")
-    history += [thought, f"{name}({args})", observation]
-else:
-    print(f"step cap {MAX_STEPS} reached without an answer")
+def react(question: str) -> tuple[list[str], str]:
+    scratchpad: list[str] = []
+    for step in range(MAX_STEPS):
+        out = think(question, scratchpad)
+        if "final" in out:
+            return scratchpad + [f"Thought {step + 1}: {out['thought']}"], out["final"]
+        observation = TOOLS[out["action"]](out["input"])
+        scratchpad.append(f"Thought {step + 1}: {out['thought']} | Action: {out['action']}({out['input']!r}) "
+                          f"| Observation: {observation}")
+    return scratchpad, "Stopped: step budget exhausted."
+
+
+if __name__ == "__main__":
+    trace, answer = react("How many people is half the world's population?")
+    print("=== reasoning trace (not user-facing) ===")
+    print("\n".join(trace))
+    print("=== final answer ===")
+    print(answer)

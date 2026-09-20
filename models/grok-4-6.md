@@ -1,37 +1,40 @@
-# Grok 4.6
+# Model profile: Grok 4.6
 
 ## Profile
 - Context window: ~500K tokens.
-- Cost: low per token. Cheap enough to iterate, retry, and run many passes.
-- Strengths: fast execution loops, tool calls, bulk transformation, mechanical iteration.
-- Best fit: carrying out a plan someone else wrote.
+- Cost: low. Suited to many iterations and high tool-call volume.
+- Strengths: execution loops, tool use, fast iteration, parallel fan-out.
+- Owns role: `executor`. Do not use for top-level planning.
 
 ## Skill budget
-- Load 5-10 skills, and only the ones the current step needs.
-- Slice `manifest.json` by role rather than reading all 21 records:
-  `jq '[.skills[] | select(.role[] == "executor") | {id, when_to_use, chains_with}]' manifest.json`
-- Load `references/patterns.md` only when a SKILL.md failure mode actually fires.
+- Load 5-10 skills per session.
+- Load at most 2 `references/patterns.md` files, only for the skill being executed;
+  open `references/deep-dive.md` only when you need the exact framework call.
+- Total context for skills should stay under ~5K tokens; keep the rest for tool output.
 
-## Owns
-- `executor` role: `prompt-chaining`, `routing`, `parallelization`, `tool-use`,
-  `model-context-protocol`, `inter-agent-communication-a2a`, `multi-agent-collaboration`.
-- Shared: `exception-handling-and-recovery` for the loops it runs.
+## Default skill set
+executor: prompt-chaining, tool-use, parallelization, routing, mcp
+safety (always): exception-handling, guardrails
+optional: rag, memory-management, multi-agent (as a sub-agent, not coordinator)
 
-## Do
-- Execute the step list you were handed. Check each step's done-when condition before moving on.
-- Use `parallelization` whenever steps are independent; this model is cheap enough to fan out.
-- Wrap every tool call with `exception-handling-and-recovery`: backoff, capped retries,
-  a fallback path, then escalate.
-- Keep iterating cheaply instead of reasoning expensively. Run the example, read the error,
-  try again.
-- Report failures upward with the trajectory attached, rather than improvising a new plan.
+## Should
+- Take a plan and success criteria from the planner (Fable 5.1) and execute step by step.
+- Wrap every tool call with detection/retry/fallback (`exception-handling`).
+- Validate tool arguments before execution (`guardrails`).
+- Fan out independent calls (`parallelization`) and merge with a grounded synthesis prompt.
+- Report per-step results, tool trajectory and token/latency counts back to the critic.
 
-## Do not
-- Do not plan. If the plan is missing or wrong, escalate to Fable 5.1 instead of inventing one.
-- Do not act as your own critic on quality-sensitive output; route that to Fable 5.1.
-- Do not retry non-transient errors. Invalid input and permission failures need a new plan.
-- Do not take irreversible actions on your own; those go through `human-in-the-loop`.
+## Should not
+- Invent or revise the overall plan; escalate to the planner with the failure and evidence.
+- Judge its own output quality as final; hand it to `reflection` / `evaluation-monitoring`.
+- Load `reasoning-techniques` ToT or `exploration-discovery` loops; they burn iterations without a critic.
+- Perform irreversible actions unless the plan explicitly authorises them.
 
-## Handoff
-- Up to Fable 5.1: failures after retries, ambiguous requirements, quality judgment calls.
-- Across to Muse: anything that needs a human's confirmation before it touches real state.
+## Loop template
+```
+for step in plan.steps:
+    load skill(step.skill_id) if not loaded
+    result = execute(step)               # tool-use / prompt-chaining / parallelization
+    if failed(result): apply exception-handling; if still failed: escalate(step, result)
+    emit {step.id, result, tools_called, tokens, latency_ms}
+```
