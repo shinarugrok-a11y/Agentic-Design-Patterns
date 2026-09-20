@@ -23,4 +23,4 @@ Return JSON: {"compliance_status": "compliant"|"non-compliant", "triggered_categ
 - Over-blocking -> allowlist and tests.
 - Injection bypass -> multiple layers.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_18_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_18_*`.

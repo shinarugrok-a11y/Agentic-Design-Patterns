@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Validate the skill library and run the low-token agent simulation.
 
-Usage: python3 tools/validate.py            (from the repo root or anywhere)
+Usage: python3 tools/validate.py            check only, non-zero exit on failure
+       python3 tools/validate.py --sync     first refresh token_cost_estimate in
+                                            SKILL.md + manifest.json and rewrite
+                                            the notebook companions, then check
 Requires: pip install tiktoken
 
 Checks structure, manifest <-> SKILL.md consistency, token caps, notebook
@@ -56,8 +59,44 @@ def parse_frontmatter(text):
     return fm, m.group(2)
 
 
+def write_manifest(manifest):
+    """One compact record per line: keeps the index cheap to load."""
+    head = {k: v for k, v in manifest.items() if k != "skills"}
+    with open(os.path.join(ROOT, "manifest.json"), "w", encoding="utf-8") as f:
+        f.write("{\n")
+        for k, v in head.items():
+            f.write(f"  {json.dumps(k)}: {json.dumps(v, ensure_ascii=False)},\n")
+        f.write('  "skills": [\n')
+        recs = manifest["skills"]
+        for i, rec in enumerate(recs):
+            f.write("    " + json.dumps(rec, ensure_ascii=False, separators=(",", ":"))
+                    + ("," if i < len(recs) - 1 else "") + "\n")
+        f.write("  ]\n}\n")
+
+
+def sync(manifest):
+    """Refresh token_cost_estimate (SKILL.md + manifest) and notebook companions."""
+    for s in manifest["skills"]:
+        p = os.path.join(ROOT, f"skills/{s['id']}/SKILL.md")
+        text = read(f"skills/{s['id']}/SKILL.md")
+        fm, body = parse_frontmatter(text)
+        if fm is None:
+            continue
+        est = tok(body)
+        text = re.sub(r"^token_cost_estimate: \d+$", f"token_cost_estimate: {est}", text, count=1, flags=re.M)
+        s["token_cost_estimate"] = est
+        open(p, "w", encoding="utf-8").write(text)
+        for nb in glob.glob(os.path.join(ROOT, "chapter_notebooks", f"Chapter_{s['chapter']:02d}_*.ipynb")):
+            open(nb[:-len(".ipynb")] + ".SKILL.md", "w", encoding="utf-8").write(text)
+    write_manifest(manifest)
+    print(f"synced token_cost_estimate and companions for {len(manifest['skills'])} skills\n")
+
+
 # --- manifest -------------------------------------------------------------
 manifest = json.loads(read("manifest.json"))
+if "--sync" in sys.argv:
+    sync(manifest)
+    manifest = json.loads(read("manifest.json"))
 skills = manifest["skills"]
 ids = [s["id"] for s in skills]
 check("manifest has 21 skills", len(skills) == 21, str(len(skills)))
@@ -80,7 +119,7 @@ SECTIONS = ("## When to use", "## When NOT to use", "## Inputs", "## Outputs", "
             "## Minimal example", "## Next skills")
 for s in skills:
     d = f"skills/{s['id']}"
-    for f in ("SKILL.md", "references/patterns.md", "references/notebook-code.md", "examples/minimal.py"):
+    for f in ("SKILL.md", "references/patterns.md", "references/deep-dive.md", "examples/minimal.py"):
         if not os.path.exists(os.path.join(ROOT, d, f)):
             missing.append(f"{d}/{f}")
     if not os.path.exists(os.path.join(ROOT, d, "SKILL.md")):
@@ -98,7 +137,7 @@ for s in skills:
     p = os.path.join(ROOT, d, "references/patterns.md")
     pat_tok[s["id"]] = tok(read(f"{d}/references/patterns.md")) if os.path.exists(p) else 0
     pat_ok &= pat_tok[s["id"]] >= 150
-check("every skill has SKILL.md, references/{patterns,notebook-code}.md, examples/minimal.py", not missing, ", ".join(missing))
+check("every skill has SKILL.md, references/{patterns,deep-dive}.md, examples/minimal.py", not missing, ", ".join(missing))
 check("SKILL.md frontmatter matches manifest + all body sections present", fm_ok)
 check("token_cost_estimate within 10 of measured body tokens", est_ok)
 check("every SKILL.md body <= 400 tokens (cl100k_base and o200k_base)", body_ok,

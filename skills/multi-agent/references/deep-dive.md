@@ -1,4 +1,4 @@
-# Multi-Agent Collaboration — reference patterns
+# Multi-Agent Collaboration — deep dive
 
 Source: Chapter 7 + six notebooks: `Chapter_07_Multi_Agent_(ADK_Gemini_Coordinator)`,
 `(ADK_Gemini_Sequential)`, `(ADK_Gemini_Parallel)`, `(ADK_Gemini_Loop)`,
@@ -113,3 +113,38 @@ Crew(agents=[researcher, writer], tasks=[research_task, writing_task], process=P
 - Name state keys once and reference them verbatim in instructions.
 - Loops: always set `max_iterations` and a checker that escalates.
 - Consider `a2a` when agents live on different frameworks/hosts.
+
+## Pattern variants
+- **Sequential handoff** — a fixed pipeline where each agent's output feeds the next; wins for staged work (research → write → edit).
+- **Parallel workstream** — independent agents run at once and their results are merged; wins when subtasks share no dependency.
+- **Hierarchical delegation** — a coordinator routes each request to the sub-agent holding the right tools; wins when the split is decided at runtime.
+- **Agent-as-tool** — a specialist wrapped in `AgentTool` so the caller sees one tool, not a peer; wins for delegation without giving up the turn.
+- **Critic-reviewer / debate** — one group produces, a second assesses it, the original revises; wins for code, research writing, and compliance.
+- **Bounded loop** — worker plus condition checker, repeating until a state flag flips.
+
+## More prompt templates
+Coordinator instruction — name the delegate per case, do not describe the work:
+
+```
+description: A coordinator that can greet users and execute tasks.
+instruction: When asked to greet, delegate to the Greeter. When asked to
+             perform a task, delegate to the TaskExecutor.
+```
+
+`AgentTool` description — all the parent agent sees of the specialist:
+
+```
+Use this tool to generate an image. The input should be a descriptive
+prompt of the desired image.
+```
+
+## Framework notes
+- **LangChain / LangGraph** — no orchestration role here; it only supplies the model to CrewAI agents.
+- **Google ADK** — `SequentialAgent`, `ParallelAgent`, `LoopAgent`, `sub_agents`, and `AgentTool` cover the topologies; `output_key` writes to `session.state`, and `EventActions(escalate=True)` ends a loop.
+- **CrewAI** — roles come from `role` / `goal` / `backstory`; `Task.context` names the upstream tasks whose output is visible downstream.
+
+## Failure modes in depth
+- **Coordination overhead exceeds the benefit** — every hop costs a model call. If the subtasks need the same tools, give one agent all of them instead of splitting.
+- **Agents duplicate work or deadlock** — give each agent a distinct `output_key` so no two write the same slot, and bound every loop with `max_iterations` plus an explicit escalate condition.
+- **Context lost or distorted at handoff** — pass structured state (`state['data']`, `Task.context`) rather than re-summarizing prose at each hop, and instruct the receiver where to read it.
+- **Errors compound with no shared critic** — add a critic-reviewer before the final synthesis that judges against stated criteria rather than re-answering the task.

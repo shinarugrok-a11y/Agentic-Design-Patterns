@@ -25,4 +25,4 @@ Question: {question}
 - Irrelevant top-k -> rerank or hybrid search.
 - Stale index -> scheduled re-index.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_14_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_14_*`.

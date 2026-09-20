@@ -23,4 +23,4 @@ call escalate_to_human with the issue type and stop.
 - Lost context -> include transcript in the handoff.
 - Timeout = approval -> default to deny.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_13_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_13_*`.

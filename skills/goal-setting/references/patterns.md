@@ -23,4 +23,4 @@ Critic: For each goal, state met/unmet and why in one line.
 - Conflicting goals -> rank or drop.
 - No cap -> `max_iterations`.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_11_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_11_*`.

@@ -22,4 +22,4 @@ Reviewer ({persona}): Score novelty, feasibility, impact 1-5 with one sentence e
 - Unbounded rounds -> round cap.
 - Novel but infeasible -> weight feasibility.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_21_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_21_*`.

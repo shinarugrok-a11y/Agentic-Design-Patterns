@@ -22,4 +22,4 @@ Use the file tools; do not guess file contents.
 - Too many tools exposed -> `tool_filter`.
 - MCP vs A2A -> MCP for tools/resources, A2A for agents.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_10_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_10_*`.

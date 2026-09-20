@@ -22,4 +22,4 @@ Before answering, search memory for prior facts about this user and cite them.
 - Context overflow -> summary memory or windowing.
 - Lost on restart -> database or Vertex services.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_08_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_08_*`.

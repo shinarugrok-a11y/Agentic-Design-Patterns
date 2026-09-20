@@ -25,4 +25,4 @@ Stage 2: Transform the following specifications into a JSON object with
 - Lost early context -> pass original input through with `RunnablePassthrough`.
 - Silent stage failure -> log each stage output; fail fast.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_01_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_01_*`.

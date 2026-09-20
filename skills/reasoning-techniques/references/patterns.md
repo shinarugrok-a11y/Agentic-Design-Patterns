@@ -22,4 +22,4 @@ ReAct: Thought: ... Action: <tool>[args] Observation: ... repeat, then Final Ans
 - ToT explosion -> beam width + depth caps.
 - Trace in output -> parse after 'Answer:'.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_17_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_17_*`.

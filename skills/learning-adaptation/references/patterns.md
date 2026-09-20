@@ -23,4 +23,4 @@ Propose one focused change. Return only the full new program.
 - Broken tooling after self-edit -> sandbox + rollback.
 - Forgetting -> keep an archive of past bests.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_09_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_09_*`.

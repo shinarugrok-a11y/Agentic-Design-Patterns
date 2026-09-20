@@ -25,4 +25,4 @@ Otherwise list bugs, style issues, missing edge cases as bullets.
 - Vague critique -> demand numbered, actionable items.
 - History overflow -> keep only latest draft + critique.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_04_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_04_*`.

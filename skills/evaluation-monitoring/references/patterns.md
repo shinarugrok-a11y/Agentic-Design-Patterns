@@ -25,4 +25,4 @@ Answer: {ans}
 - Judge without rubric -> explicit criteria and scale.
 - No cost metrics -> log tokens and latency.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_19_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_19_*`.

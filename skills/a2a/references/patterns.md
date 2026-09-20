@@ -22,4 +22,4 @@ Client task: What is the weather in Paris? Respond in one sentence.
 - Long tasks time out -> streaming or push notifications.
 - Open endpoint -> auth in card `securitySchemes`.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_15_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_15_*`.

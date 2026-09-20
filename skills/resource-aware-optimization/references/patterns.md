@@ -24,4 +24,4 @@ Query: {query}
 - Classifier too costly -> rules or tiny model.
 - No metrics -> log per-tier cost/quality.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_16_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_16_*`.

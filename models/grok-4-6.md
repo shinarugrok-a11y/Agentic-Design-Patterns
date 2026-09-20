@@ -9,7 +9,7 @@
 ## Skill budget
 - Load 5-10 skills per session.
 - Load at most 2 `references/patterns.md` files, only for the skill being executed;
-  open `references/notebook-code.md` only when you need the exact framework call.
+  open `references/deep-dive.md` only when you need the exact framework call.
 - Total context for skills should stay under ~5K tokens; keep the rest for tool output.
 
 ## Default skill set

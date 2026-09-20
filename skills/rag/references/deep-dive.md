@@ -1,4 +1,4 @@
-# Knowledge Retrieval (RAG) — reference patterns
+# Knowledge Retrieval (RAG) — deep dive
 
 Source: Chapter 14 + `Chapter_14_Knowledge_Retrieval_(RAG_LangChain)`,
 `(RAG_Google_Search)`, `(RAG_VertexAI)`.
@@ -110,3 +110,38 @@ Context:
 - Right chunk absent -> chunking/embedding/top_k problem.
 - Confident answer with no chunks -> missing "I don't know" instruction.
 - Stale answers -> index not refreshed after document updates.
+
+## Pattern variants
+- **Standard RAG** — chunk, embed, vector-search top-k, append to prompt; the default when documents are independent.
+- **Hybrid retrieval** — fuse BM25 keyword ranking with vector search; wins when queries carry exact identifiers that embeddings blur.
+- **GraphRAG** — retrieve over a knowledge graph of entities and relations; wins on multi-hop questions needing facts stitched across documents, at higher maintenance cost.
+- **Agentic RAG** — a reasoning layer validates sources, reconciles contradictions, decomposes into sub-queries, re-retrieves; wins when sources conflict or differ in vintage.
+- **Search-tool grounding** — skip the index, give the agent a live search tool; open-web freshness, no corpus control.
+
+## More prompt templates
+```
+You are an assistant for question-answering tasks.
+Use the following pieces of retrieved context to answer the question.
+If you don't know the answer, just say that you don't know.
+Use three sentences maximum and keep the answer concise.
+Question: {question}
+Context: {context}
+Answer:
+```
+
+```
+Sources with source name and date: {numbered_chunks}
+Before answering, name any sources that contradict each other and say which you
+trust and why (recency, authority, document type). Cite every claim as [n].
+If the sources do not contain the answer, reply exactly: NOT IN CORPUS.
+```
+
+## Framework notes
+- **LangChain / LangGraph** — `TextLoader` → `CharacterTextSplitter` → vector store → `as_retriever()`; making retrieve and generate `StateGraph` nodes is what enables re-retrieval loops.
+- **Google ADK** — `google_search` for live grounding; `VertexAiRagMemoryService` for a managed corpus.
+
+## Failure modes in depth
+- **Retrieval misses, model guesses** — top-k too small or query phrased unlike the corpus; raise k behind a distance threshold, add BM25, and make "NOT IN CORPUS" an allowed answer.
+- **Chunk size wrong** — small chunks lose the context that made them meaningful, large ones crowd the prompt with noise; chunk on structure (section, paragraph) with overlap, per the 500/50 default.
+- **Stale index** — a pre-processed corpus drifts from evolving wikis; schedule reconciliation and carry a date in chunk metadata so the model prefers the current policy over a 2020 blog post.
+- **Unattributable answers** — sources dropped between retrieval and generation; keep `doc.metadata["source"]` bound to each numbered chunk in the context string and require `[n]` citations.

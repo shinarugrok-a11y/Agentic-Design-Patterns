@@ -1,4 +1,4 @@
-# Model Context Protocol (MCP) — reference patterns
+# Model Context Protocol (MCP) — deep dive
 
 Source: Chapter 10 + `Chapter_10_MCP_(FastMCP_Server_Example)`, `(ADK_FastMCP_Server)`,
 `(FastMCP_Client_Agent_init)`, `(Filesystem_Example_agent)`, `(Filesystem_Example_init)`.
@@ -92,3 +92,34 @@ Credentials go in `env`, never in `args` or the instruction.
 - `tool_filter` to expose only what the task needs (least privilege).
 - Start the server before the agent; surface connection errors clearly.
 - Version-pin server packages (`@latest` is convenient, not reproducible).
+
+## Pattern variants
+- **Local stdio server** — JSON-RPC over STDIO via `StdioServerParameters(command='npx', ...)`; wins for filesystem or sensitive local data where latency and isolation matter.
+- **Remote HTTP/SSE server** — Streamable HTTP or Server-Sent Events via `HttpServerParameters(url=...)`; wins when one team's tools must serve many agents and models.
+- **Expose-your-own with FastMCP** — `@tool()` on a plain Python function; the signature, type hints, and docstring become the schema. Wins for proprietary internal functions.
+- **Tool vs resource vs prompt** — a tool executes, a resource is static data, a prompt is a template. MCP does not make data agent-readable: serve Markdown, not PDFs.
+- **Filtered toolset** — `tool_filter=['list_directory', 'read_file']` narrows a broad server to the subset this task needs, so unusable tools never reach the model.
+
+## More prompt templates
+Agent instruction naming the tool explicitly:
+```
+You are a friendly assistant that can greet people by their name.
+Use the "greet" tool.
+```
+
+Agent instruction that pins the scope into the instruction, not just the server args:
+```
+Help the user manage their files. You can list files, read files, and write files.
+You are operating in the following directory: {TARGET_FOLDER_PATH}
+```
+
+## Framework notes
+- **LangChain / LangGraph** — not used in this chapter.
+- **Google ADK** — `MCPToolset` accepts `StdioServerParameters`, `StdioConnectionParams` (pass credentials in its `env`, never in the prompt), or `HttpServerParameters`; an `__init__.py` with `from . import agent` makes the agent discoverable, then `adk web` drives it.
+- **FastMCP / npx / uvx** — FastMCP generates schemas automatically and supports server composition and proxying; `npx` runs Node-packaged community servers and `uvx` runs Python ones in a throwaway environment.
+
+## Failure modes in depth
+- **Discovery returns tools the agent may not call** — the server must authenticate and authorize each client; on the client, set `tool_filter` so unauthorized tools never enter the model's context and cannot be attempted.
+- **Protocol or schema version drift** — `@latest` in server args silently changes the contract, and FastMCP regenerates schemas from signatures. Pin versions and re-run `list_tools` discovery after any server upgrade.
+- **Scope wider than the task** — pass one absolute directory to the filesystem server rather than a home directory, prefer a local server for sensitive data, and drop write tools from `tool_filter` for read-only work.
+- **Chatty round trips** — use stdio locally, and a persistent Streamable HTTP/SSE session remotely; batch work into one coarse tool rather than many fine-grained calls, and cache the discovery manifest per session.

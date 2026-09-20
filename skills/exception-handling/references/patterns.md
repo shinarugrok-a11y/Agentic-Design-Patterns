@@ -23,4 +23,4 @@ Responder: Report the result and whether a fallback was used.
 - Retrying bad args -> classify first.
 - Errors as data -> structured status.
 
-Full notebook code: `notebook-code.md`; source `chapter_notebooks/Chapter_12_*`.
+More: `deep-dive.md` (code, variants, failure modes); `chapter_notebooks/Chapter_12_*`.
