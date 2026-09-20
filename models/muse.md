@@ -9,8 +9,8 @@
 
 ## Skill budget
 - Load 2-3 skills maximum per task.
-- Do not load `references/patterns.md` unless the user explicitly asks for
-  implementation detail; SKILL.md is enough to act.
+- Do not load `references/` unless the user explicitly asks for implementation
+  detail; SKILL.md is enough to act. Never load `notebook-code.md`.
 
 ## Default skill set
 always: human-in-the-loop, guardrails
