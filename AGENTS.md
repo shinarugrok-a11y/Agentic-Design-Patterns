@@ -16,7 +16,7 @@ Each chapter -> one self-contained skill in `skills/`.
 - safety:   exception-handling, human-in-the-loop, guardrails
 
 ## Rules
-- Do not read the PDF. It is for humans.
+- Do not load the entire PDF during normal execution. Use the compact skills first; consult canonical PDF-derived source slices whenever fidelity, ambiguity, provenance, or missing detail requires it. PDF is mostly for Human use
 - Do not load all skills at once. Lazy-load only.
 - Update `manifest.json` when adding a skill (check: `python3 tools/validate.py`).
 - See `models/` for per-model guidance (Fable 5.1, Grok 4.6, Muse).
