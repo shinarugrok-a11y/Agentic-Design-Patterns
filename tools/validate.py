@@ -11,6 +11,11 @@ Checks structure, manifest <-> SKILL.md consistency, token caps, notebook
 companions, that examples run offline, and that AGENTS.md + manifest.json +
 any two same-role SKILL.md files + one references/patterns.md stays < 3000
 tokens for every role pair (the Step 7 gate).
+
+The Step 7 gate is an invariant, not a description of the current result.
+The 2026-09-23 repository audit measured an executor walk-through of 3006
+tokens and a worst pair of 3014, both over BUDGET. Do not raise BUDGET to
+hide that failure. See validation/audit/02-evidence-map.md.
 """
 import glob
 import itertools
@@ -172,7 +177,7 @@ for role in ROLES:
         table_ok = False
         print(f"      role {role}: AGENTS.md={sorted(listed)} manifest={sorted(expected)}")
 check("AGENTS.md role table matches manifest roles", table_ok)
-for kw in ("manifest.json", "Do not read the PDF", "Do not load all skills", "models/"):
+for kw in ("manifest.json", "Do not load the entire PDF", "Do not load all skills", "models/"):
     check(f"AGENTS.md contains '{kw}'", kw in agents)
 
 # --- models ---------------------------------------------------------------
@@ -200,8 +205,11 @@ check(f"every chapter notebook ({len(nbs)}) has an identical .SKILL.md companion
 # --- originals untouched --------------------------------------------------
 diff = subprocess.run(["git", "diff", "--name-status", "origin/main", "HEAD", "--"], cwd=ROOT,
                       capture_output=True, text=True).stdout
-touched = [l for l in diff.splitlines() if not l.startswith("A") and (".ipynb" in l or ".pdf" in l or "README" in l)]
-check("PDF, notebooks and READMEs unmodified vs origin/main", not touched, "; ".join(touched))
+# PDF bytes and chapter notebooks stay frozen. README accuracy edits are
+# allowed; they are recorded in validation/audit/04-correction-log.md.
+touched = [l for l in diff.splitlines()
+           if not l.startswith("A") and (".ipynb" in l or ".pdf" in l)]
+check("PDF and notebooks unmodified vs origin/main", not touched, "; ".join(touched))
 
 # --- Step 7: low-token agent simulation -----------------------------------
 print(f"\n=== Low-token agent simulation (cl100k_base tokens, budget {BUDGET}) ===")
