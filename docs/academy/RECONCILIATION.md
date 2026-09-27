@@ -18,7 +18,7 @@ Rule applied: the newest *commits* win for repository content. The user's analys
 | **Adopted** | 13 | Implementation vs teaching dependency · "Define Done" first · composition mission by Mission 5 · authority taught with tools · silent-success failure class · extended forensic timeline · no fake chain-of-thought · OUTCOME/PROCESS/GENERALIZATION · public / generated / private-held-out split · "Reflection fixes today, Learning fixes tomorrow" · "sometimes add nothing" · six primary IA surfaces incl. Benchmark Lab · human-scale graduation core + extra stressors |
 | **Adopted with modification** | 5 | Provenance labels (merged scheme, §3) · ten-mission list (merged, §5) · disclosure tiers · Pattern Library fields · trace lifecycle |
 | **Rejected / not adopted** | 6 | Governance taught after multi-agent (phase VII) · evaluation as phase VIII only · "01–04 more verified than 05–21" · "Reflection batch corrupted" · single-label classification · corpus vocabulary that does not exist (APD, controlling_topology, CompSD, Beowulf…) |
-| **Corrections to A** | 4 | A missed the Ch 11 / Planning overlap · A's "Tool Use must precede Routing" was too strong · A lacked "silent success" as a distinct class · A's label scheme conflated synthesis with invention |
+| **Corrections to A** | 6 | A missed the Ch 11 / Planning overlap · A's "Tool Use must precede Routing" was too strong · A lacked "silent success" as a distinct class · A's label scheme conflated synthesis with invention · A's F-15 overstated the book ("degradation must be declared" is DERIVED) · an off-by-three citation for F-28 (§6 items 10–11) |
 
 ## 2. Corpus claims in U
 
@@ -272,3 +272,5 @@ Recorded here; A is not rewritten, so its history stays auditable.
 7. A §Q15 → superseded by [SCENARIO-CONTRACT.md](SCENARIO-CONTRACT.md) and [EVALUATION-CONTRACT.md](EVALUATION-CONTRACT.md).
 8. A §21 → six primary surfaces (§4.9).
 9. A §Q3 claim "Tool Use should precede Routing" → withdrawn as a *teaching* claim (§4.2).
+10. A §Q7 F-15 anchor → **overstated**; the correction was found while writing the contracts. A labels "graceful degradation must be *declared*" as canonical (GT:L7604–L7606). The book describes graceful degradation as keeping partial functionality, and lists notification as a separate strategy (GT:L7608–L7609). It does not require declaring the degradation. Reclassified: graceful degradation is SOURCE; "must be declared" is DERIVED. EVALUATION-CONTRACT HG4 carries the corrected label.
+11. A §Q7 F-28 citation → the LLM-as-a-Judge row of the evaluation-method table is GT:L12314–L12317, not L12311–L12314. The content is unchanged.
