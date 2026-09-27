@@ -2,13 +2,32 @@
 
 ## About
 Code notebooks for the book **"Agentic Design Patterns"** by Antonio Gulli.
-All 21 chapters have complete, runnable code examples — 58 notebooks covering multiple frameworks per chapter.
+This directory holds 65 `.ipynb` files: 56 chapter notebooks and 9 appendix notebooks.
+They are illustrative snippets collected with the book materials. They are not a pinned, tested application.
+
+## What is in these files
+- 56 chapter notebooks, one or more framework variants per chapter. The index below matches the filenames in this directory.
+- 56 `Chapter_*.SKILL.md` companions. `tools/validate.py` checks that each one is a byte-for-byte copy of `skills/<id>/SKILL.md` for that chapter. They are generated duplicates of the skill library, not separate notebook documentation.
+- 2 appendix notebooks that contain code or examples: `Appendix_C_(Code).ipynb`, `Appendix_Pydantic.ipynb`.
+- 7 appendix notebooks that are download placeholders (Appendix A, B, C overview, D, E, F, and G). Each one tells the reader to fetch a file from a Google Drive folder and replace the placeholder. That step is historical acquisition context. It is not required to read the PDF, use `skills/`, or run `skills/*/examples/minimal.py`. The placeholder cell calls `print(f"Code for: {chapter_name}")` and raises `NameError` when executed, because `chapter_name` is undefined.
+
+## Execution status (repository audit, 2026-09-23)
+Running a notebook requires the third-party libraries that notebook imports, plus API credentials where the code reads them. This repository does not pin those libraries and does not ship a `.env` file.
+
+Observed in this audit:
+- `Chapter_19_Evaluation_(Basic_Response_Evaluation).ipynb` executes offline with the Python standard library and prints local evaluation lines (accuracy, simulated latency, token counts).
+- `Chapter_01_Prompt_Chaining_(JSON_Example).ipynb` is a JSON object, not a prompt-chaining program.
+- Seven notebooks do not parse as Python: `Chapter_03_Parallelization_(Google_ADK).ipynb` (leading indent), `Chapter_14_Knowledge_Retrieval_(RAG_Google_Search).ipynb` (`tools=[Google Search]`), `Chapter_15_Inter_Agent_(Sync_Streaming_Requests).ipynb` (JSON examples inside a code cell), `Chapter_17_Reasoning_(CoT_Prompt).ipynb` and `Chapter_17_Reasoning_(Self_Correction).ipynb` (prompt text), `Chapter_18_Guardrails_(LLM_as_Guardrail).ipynb` (prompt text), `Chapter_21_Exploration_Discovery_(Agent_Laboratory).ipynb` (indented excerpt).
+- Stored cell outputs in five notebooks record earlier failures (`NameError`, `AuthenticationError` on the placeholder `YOUR_OPENAI_API_KEY`, `ModuleNotFoundError`). Those outputs are historical execution traces.
+- Several files are fragments (`__init__.py` one-liners, `path/to/` placeholders, top-level `await`).
+
+Treat framework calls inside notebooks as examples from the book materials. The offline pattern stubs that this repository actually executes are `skills/*/examples/minimal.py`.
 
 ## Book Information
 - **Title**: Agentic Design Patterns: A Hands-On Guide to Building Intelligent Systems
 - **Author**: Antonio Gulli — [LinkedIn](https://www.linkedin.com/in/searchguy/)
-- **Pre-order**: [Amazon](https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018/)
-- **Charity**: All author royalties are donated to Save the Children.
+- **Book page**: [Amazon, ISBN 3032014018](https://www.amazon.com/Agentic-Design-Patterns-Hands-Intelligent/dp/3032014018/). Current retail status was not re-checked.
+- **Charity**: The book text says all author royalties are donated to Save the Children.
 
 ## File Structure
 Naming convention: `Chapter_XX_Topic_(Variant).ipynb`
@@ -127,17 +146,20 @@ Each chapter may have multiple notebooks for different framework implementations
 - `Appendix_Pydantic.ipynb`
 
 ## Getting Started
-1. Install Jupyter: `pip install jupyter`
-2. Navigate to this folder: `cd chapter_notebooks`
-3. Start Jupyter: `jupyter notebook`
-4. Open any notebook and start learning!
+Jupyter is optional and is not installed by this repository.
 
-## Requirements
 ```bash
-pip install jupyter notebook ipykernel
-pip install pandas numpy matplotlib  # Common dependencies
+python3 -m pip install jupyter
+cd chapter_notebooks
+jupyter notebook
 ```
 
+Open a specific notebook only after installing the imports that file uses. Supply API keys through your own environment. The notebooks that read keys expect names such as `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `DATASTORE_ID`, and `GOOGLE_CSE_ID`. This tree does not contain those values.
+
+There is no `requirements.txt`. `pandas`, `numpy`, and `matplotlib` are not the dependency set of these notebooks. Imports that do appear include `langchain_openai`, `google.adk`, `crewai`, `openai`, `fastmcp`, `openevolve`, `langgraph`, and `google.generativeai`. Versions are unpinned and were not installed during the audit.
+
 ## Sources
-- [Table of Contents](https://docs.google.com/document/d/1rsaK53T3Lg5KoGwvf8ukOUvbELRtH-V0LnOIFDxBryE/edit)
-- [Google Drive Folder](https://drive.google.com/drive/u/0/folders/1Y3U3IrYCiJ3E45Z8okR5eCg7OPnWQtPV)
+These links are external pointers carried in from the notebook collection. They are not setup steps for the files already in this directory.
+
+- [Table of Contents (Google Doc)](https://docs.google.com/document/d/1rsaK53T3Lg5KoGwvf8ukOUvbELRtH-V0LnOIFDxBryE/edit) — external; the chapter list below is the in-repo index.
+- [Google Drive folder](https://drive.google.com/drive/u/0/folders/1Y3U3IrYCiJ3E45Z8okR5eCg7OPnWQtPV) — historical source named by the seven placeholder notebooks. Access was not re-checked in the 2026-09-23 audit.
