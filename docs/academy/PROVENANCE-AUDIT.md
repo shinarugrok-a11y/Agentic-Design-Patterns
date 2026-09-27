@@ -191,6 +191,93 @@ These are recorded, not fixed. The existing skill files were not modified by thi
 | Commit | Result | Failing checks |
 | --- | --- | --- |
 | `10ad49a` (this branch's base; run here with `tiktoken` installed) | 27 pass / 1 fail | "PDF, notebooks and READMEs unmodified vs origin/main" — fails only because `origin/main` gained `ground-truth/README.md`. Token simulation passes: walk-through 2,974, worst pair 2,982. |
-| `ed7e205` (newest; per `validation/audit/09-consistency-report.md`, not re-run) | 26 pass / 2 fail | Token simulation 3,006 and 3,014 over the 3,000 budget, after the longer AGENTS.md rule from `a486c70`. |
+| `ed7e205` (newest; per `validation/audit/09-consistency-report.md`) | 26 pass / 2 fail | Token simulation 3,006 and 3,014 over the 3,000 budget, after the longer AGENTS.md rule from `a486c70`. |
+| `8d15ae3` (this branch after merging `origin/main` and `ed7e205`; re-run here) | 26 pass / 2 fail | Same two: "simulation: executor walk-through < 3000" (3,006 tokens) and "every role pair + one patterns.md < 3000" (worst 3,014). Reported, not fixed; no skill file was edited. |
 
 Conclusion: "validated" is branch-dependent and structural only. No check tests whether any skill claim matches the book.
+
+## 7. EXTERNAL-UNVERIFIED claims register (user analysis 2026-09-27)
+
+Source of the claims: the user's "Agent Academy — First Design Analysis", condensed by the coordinator. Reconciled in [`RECONCILIATION.md`](RECONCILIATION.md).
+
+Method:
+
+- `git grep -i` across every local and remote ref, excluding `docs/academy/`.
+- `git log --all -S` for pickaxe history.
+- `ast.parse` over the code cells of all 65 notebooks, with `!`/`%` magics stripped.
+- Direct reads of `ground-truth/agentic_design_patterns.txt`.
+
+Run on `8d15ae3`.
+
+Status values:
+
+- **NOT FOUND**: the artifact or term is absent from every ref and from history. It is labelled EXTERNAL-UNVERIFIED and may not be relied on.
+- **FALSE**: the repository contradicts the claim.
+- **UNSUPPORTED**: nothing in the repository bears on the claim either way.
+- **VERIFIED** / **PARTIAL**: checked against the book text.
+
+### 7.1 Claims about corpus artifacts
+
+| # | User claim | Status | Evidence |
+| --- | --- | --- | --- |
+| X-1 | APD-01..APD-04 have structured extraction records | NOT FOUND | No `APD-` string in any ref or in history. `validation/audit/06-candidate-pattern-mappings.md:3`: "There is no `APD-NN` ontology in the tree." |
+| X-2 | Those records are marked `status: unverified` | NOT FOUND | The string occurs only in `validation/audit/04-correction-log.md:117` and `10-unresolved.md:3`, both about this repo's own README claims, not about pattern records. |
+| X-3 | APD-05..21 have not undergone extraction/verification | NOT FOUND (vacuous) | No APD records exist at all. |
+| X-4 | MANIFEST `pattern_index` lists APD-01/02 at schema 2.1 while records are 2.2 | NOT FOUND | `manifest.json` has `version: "1.0"` and keys `version`, `source`, `skills` only. No `pattern_index` in any ref or in history. There are no schema versions 2.1 or 2.2. |
+| X-5 | A "conversion log" shows syntax-breaking PDF damage across examples | NOT FOUND | No conversion log exists. The notebooks are not PDF conversions. They are the book's companion `.ipynb` files, and their parse failures are authoring defects (7.2). |
+| X-6 | "The D4 correction demonstrates internal consistency improvement" of a router | NOT FOUND | No D4 correction, router, or routing fixture exists. `validation/audit/04-correction-log.md` records README/validator corrections only. |
+| X-7 | "Relationship decomposition fixed a real synthetic routing failure" | NOT FOUND | There are no routing fixtures and no such term. |
+| X-8 | `controlling_topology`, `unit_of_application`, "secondary local pattern" | NOT FOUND | None exists in any ref or in history. |
+| X-9 | "System-1/System-2 decision bus" | NOT FOUND | Absent from the repo. The book has no System 1/System 2 dual-process framing (0 hits). |
+| X-10 | "CompSD-style external durable state" | NOT FOUND | Absent. |
+| X-11 | "Pattern retrieval as a compilation process" | NOT FOUND | Absent. |
+| X-12 | "Beowulf configuration" | NOT FOUND | Absent. Not registrable as a Benchmark Lab contestant until defined. |
+| X-13 | ROUTING-INDEX, EVALUATION-LAYER-MODEL (as corpus artifacts) | NOT FOUND | Absent. |
+| X-14 | "Reflection batch contains particularly severe corruption" | **FALSE** | All three `Chapter_04_Reflection_*` notebooks (ADK, Iterative_Loop, LangChain) parse. The Ch 4 book text (GT:L2445–L2890) is clean prose and code. See 7.2 for the actual failures. |
+| X-15 | Extracted code "can't serve as canonical implementation" | PARTIAL | True for the 7 non-parsing notebooks and for the placeholders (§4). It is not true corpus-wide. 58 of 65 parse, though parsing is not the same as running: only `Chapter_19_Evaluation_(Basic_Response_Evaluation)` runs offline. Notebooks stay SOURCE-CODE, never SOURCE. |
+| X-16 | Chapters 01–04 are further verified than 05–21 ("05–21 source-only provisional") | UNSUPPORTED | Nothing in this repo treats 01–04 differently: not the skills, the manifest, `validation/audit/`, or the notebooks. |
+
+### 7.2 Correction to X-14: the seven actual parse failures
+
+Re-run on `8d15ae3`. The results match §4 and `validation/audit/notebook-inventory.json`.
+
+| Notebook | Python error | Cause (read from the code) |
+| --- | --- | --- |
+| `Chapter_03_Parallelization_(Google_ADK).ipynb` | unexpected indent (line 5) | Leading indentation in the first code cell |
+| `Chapter_14_Knowledge_Retrieval_(RAG_Google_Search).ipynb` | invalid syntax (line 1) | `import Google Search` / `tools=[Google Search]`, a product name typed as code |
+| `Chapter_15_Inter_Agent_(Sync_Streaming_Requests).ipynb` | unexpected indent (line 25) | JSON protocol examples pasted into a code cell |
+| `Chapter_17_Reasoning_(CoT_Prompt).ipynb` | unterminated string literal (line 1) | Prompt prose in a code cell |
+| `Chapter_17_Reasoning_(Self_Correction).ipynb` | unterminated string literal (line 3) | Prompt prose in a code cell |
+| `Chapter_18_Guardrails_(LLM_as_Guardrail).ipynb` | unterminated string literal (line 7) | Markdown/prompt prose in a code cell |
+| `Chapter_21_Exploration_Discovery_(Agent_Laboratory).ipynb` | expected `except` or `finally` (line 68) | Truncated `try:` block in an excerpt |
+
+None is in Chapter 4. None is attributable to PDF extraction: these are the original authors' notebook files. All seven carry the WEAK flag and are never positive examples.
+
+### 7.3 Claims about the book
+
+All are checked against the book text. Pages are PDF chapter-start pages (§1). "VERIFIED" means the book says it. It does not mean the claim is true of agents in general.
+
+| # | User claim | Status | Evidence |
+| --- | --- | --- | --- |
+| B-1 | Ch 6 Planning reasons from initial to goal state and distinguishes discovering *how* from a predetermined workflow | VERIFIED | p98. GT:L3813, L3821, L3839 ("does the 'how' need to be discovered"), L3860 |
+| B-2 | Ch 11 opens on objectives, but its overview re-explains planning | VERIFIED | p181. GT:L7012–L7025 (trip analogy, initial/goal state, step sequence). Recorded as C-30. Authorial intent is UNCERTAIN. |
+| B-3 | Ch 8 distinguishes short-lived context from persistent memory | VERIFIED | p130. GT:L5007–L5018 (short-term = context window); L5818–L5821 (short-term vs long-term, external stores) |
+| B-4 | Ch 5: execution happens in an orchestration layer after the model proposes a structured call | VERIFIED | p77. GT:L3737–L3742 ("An orchestration layer executes this function call") |
+| B-5 | Ch 16 distinguishes action sequencing from computational/temporal/financial resource decisions | VERIFIED | p244. GT:L9388–L9390 ("differs from simple planning, which primarily focuses on action sequencing") |
+| B-6 | Ch 19 emphasizes trajectories, latency, resources, effectiveness and compliance, and distinguishes itself from Ch 11 | VERIFIED | p304. GT:L11900–L11903 ("While Chapter 11 outlines goal setting and monitoring… this chapter focuses on…"); trajectories GT:L12325–L12328 |
+| B-7 | Ch 7 frames multi-agent as decomposition among specialized agents | VERIFIED | p111. GT:L4278 |
+| B-8 | Ch 10 MCP is a standardized client/server interface for resources, prompts and tools | VERIFIED | p165. GT:L6354, L6960–L6963; MCP vs function-calling table GT:L6393 |
+| B-9 | Ch 14 RAG supplies external/current knowledge | VERIFIED | p211. GT:L8161–L8176 |
+| B-10 | Ch 15 A2A is an open protocol across frameworks | VERIFIED | p229. GT:L8807, L9277, L9286 |
+| B-11 | Ch 17 uses more inference-time compute and multiple solution paths | VERIFIED | p260. GT:L10047, L10058 |
+| B-12 | Ch 12 covers retries, fallback, graceful degradation, rollback, diagnosis and escalation | VERIFIED | p194. GT:L7574–L7578, L7613–L7617 |
+| B-13 | Ch 13 is for oversight in complex, ambiguous or high-risk settings | VERIFIED | p202. GT:L7818–L7819 ("complexity, ambiguity, or significant risk") |
+| B-14 | Ch 18 covers input validation, output filtering, behavioral constraints, tool restrictions and human oversight | VERIFIED (subset) | p284. GT:L11022–L11028 lists six stages. The user's list omits "External Moderation APIs". |
+| B-15 | Ch 20 criteria: urgency, importance, dependencies, resources | VERIFIED | p323. GT:L12638, L12975 |
+| B-16 | Ch 9 is about changing thinking/action/knowledge from experience | VERIFIED (paraphrase) | p152. GT:L5912–L5916, L6273–L6276 ("behavior or knowledge"). "Thinking" is the user's word. |
+| B-17 | Ch 21 targets unfamiliar solution spaces | VERIFIED | p333. GT:L13044–L13047 ("unfamiliar territories", "unknown unknowns") |
+| B-18 | Reflection "is source-supported as a behavior that can operate across another workflow" | PARTIAL | p63/p194. The book supports *combinable*: GT:L2884–L2886 ("can be integrated with other foundational patterns") and GT:L7564 (Ch 12 "may sometimes be used with reflection"). "Cross-cutting dimension" is DERIVED, both in the user's analysis and in DESIGN-ANALYSIS. |
+
+### 7.4 Rule going forward
+
+Rows X-1..X-13 stay EXTERNAL-UNVERIFIED until the user supplies the artifacts, as files committed to this repository or an inspectable link. Until then, no academy contract, mission, fixture or score may depend on them. RECONCILIATION §4.13 holds two of the terms (`unit_of_application`, `controlling_topology`) as EXPERIMENTAL candidates only.
