@@ -6,6 +6,27 @@ threshold, mission parameter and schema field is a proposal.
 Companion file: [`PROVENANCE-AUDIT.md`](PROVENANCE-AUDIT.md) (full artifact-by-artifact audit,
 notebook weakness list, citation index).
 
+> **Revision note (2026-09-27).** This document has been reconciled against the user's own
+> design analysis in [`RECONCILIATION.md`](RECONCILIATION.md). It is kept unedited below so
+> its history stays auditable. Where the two differ, RECONCILIATION wins:
+>
+> - Labels are replaced by SOURCE / SOURCE-CODE / SYNTHESIZED / DERIVED / EXPERIMENTAL /
+>   EXTERNAL-UNVERIFIED, plus the flags WEAK / UNCERTAIN / NONEXISTENT (mapping in RECONCILIATION §3).
+> - The act structure in §3/§22 is superseded by RECONCILIATION §4.3.
+> - Q11's missions are superseded by RECONCILIATION §5.
+> - Q12's graduation becomes a human-scale core plus a background load.
+> - Q15 is superseded by [`SCENARIO-CONTRACT.md`](SCENARIO-CONTRACT.md) and
+>   [`EVALUATION-CONTRACT.md`](EVALUATION-CONTRACT.md).
+> - §21 uses six primary surfaces.
+> - Q3's "Tool Use should precede Routing" is withdrawn as a teaching claim.
+> - Added: contradiction C-30 (Ch 11 overview duplicates planning) and failure F-36 (silent success).
+> - Corrected: Q7 F-15's "graceful degradation must be *declared*" is DERIVED, not canonical.
+>   The book does not require declaration (GT:L7604–L7609). F-28's judge citation is
+>   GT:L12314–L12317 (RECONCILIATION §6 items 10–11).
+>
+> The visual direction is in [`ART-DIRECTION.md`](ART-DIRECTION.md). The user's corpus claims
+> are registered in PROVENANCE-AUDIT §7.
+
 ---
 
 ## 0. Evidence contract used in this document
