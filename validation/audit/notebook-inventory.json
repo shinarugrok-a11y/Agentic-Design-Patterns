@@ -1,0 +1,1033 @@
+{
+  "audit_date": "2026-09-23",
+  "notebooks": [
+    {
+      "file": "chapter_notebooks/Appendix_A_Advanced_Prompting_Techniques.ipynb",
+      "kind": "placeholder_appendix",
+      "cells": 2,
+      "chars": 834,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "HISTORICAL"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_B_AI_Agentic_From_GUI_to_Real_world_environment.ipynb",
+      "kind": "placeholder_appendix",
+      "cells": 2,
+      "chars": 852,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "HISTORICAL"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_C_(Code).ipynb",
+      "kind": "appendix_notebook",
+      "cells": 4,
+      "chars": 2534,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [
+        {
+          "cell": 0,
+          "ename": "NameError",
+          "evalue": "name 'prompt' is not defined"
+        },
+        {
+          "cell": 2,
+          "ename": "NameError",
+          "evalue": "name 'ParallelAgent' is not defined"
+        }
+      ],
+      "colab_identity_metadata": true,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_C_Quick_overview_of_Agentic_Frameworks.ipynb",
+      "kind": "placeholder_appendix",
+      "cells": 2,
+      "chars": 842,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "HISTORICAL"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_D_Building_an_Agent_with_AgentSpace.ipynb",
+      "kind": "placeholder_appendix",
+      "cells": 2,
+      "chars": 839,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "HISTORICAL"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_E_AI_Agents_on_the_CLI.ipynb",
+      "kind": "placeholder_appendix",
+      "cells": 2,
+      "chars": 826,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "HISTORICAL"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_F_Under_the_Hood_Reasoning_Engines.ipynb",
+      "kind": "placeholder_appendix",
+      "cells": 2,
+      "chars": 839,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "HISTORICAL"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_G_Coding_agents.ipynb",
+      "kind": "placeholder_appendix",
+      "cells": 2,
+      "chars": 819,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "HISTORICAL"
+    },
+    {
+      "file": "chapter_notebooks/Appendix_Pydantic.ipynb",
+      "kind": "appendix_notebook",
+      "cells": 1,
+      "chars": 1819,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "pydantic"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_01_Prompt_Chaining_(Code_Example).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1559,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "langchain_core",
+        "langchain_openai"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_01_Prompt_Chaining_(JSON_Example).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 450,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_02_Routing_(Google_ADK).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 5310,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_02_Routing_(LangGraph).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 4361,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "langchain_core",
+        "langchain_google_genai"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_02_Routing_(Openrouter).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 539,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "requests"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_03_Parallelization_(Google_ADK).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 5266,
+      "syntax_errors": [
+        {
+          "cell": 0,
+          "msg": "unexpected indent"
+        }
+      ],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_03_Parallelization_(LangChain).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 3458,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "langchain_core",
+        "langchain_openai"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_04_Reflection_(ADK).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1466,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_04_Reflection_(Iterative_Loop).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 4243,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "dotenv",
+        "langchain_core",
+        "langchain_openai"
+      ],
+      "env_names": [
+        "OPENAI_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_04_Reflection_(LangChain).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 3334,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "langchain_core",
+        "langchain_openai"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_05_Tool_Use_(CrewAI).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 4040,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "crewai"
+      ],
+      "env_names": [
+        "OPENAI_API_KEY",
+        "OPENAI_MODEL_NAME"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_05_Tool_Use_(Executing_Code).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 3972,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "dotenv",
+        "google",
+        "nest_asyncio"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_05_Tool_Use_(Google_Search).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1543,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google",
+        "nest_asyncio"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_05_Tool_Use_(LangChain).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 4,
+      "chars": 7102,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "dotenv",
+        "langchain",
+        "langchain_core",
+        "langchain_google_genai",
+        "nest_asyncio"
+      ],
+      "env_names": [
+        "GOOGLE_API_KEY",
+        "OPENAI_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": true,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_05_Tool_Use_(Vertex_AI_Search).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 3534,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [
+        "DATASTORE_ID",
+        "GOOGLE_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_06_Planning_(Code_Example).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1787,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "crewai",
+        "dotenv",
+        "langchain_openai"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_06_Planning_(Deep_Research_API).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 2,
+      "chars": 2874,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "openai"
+      ],
+      "env_names": [],
+      "stored_errors": [
+        {
+          "cell": 0,
+          "ename": "AuthenticationError",
+          "evalue": "Error code: 401 - {'error': {'message': 'Incorrect API key provided: YOUR_OPE*******_KEY. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'inva"
+        }
+      ],
+      "colab_identity_metadata": true,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_07_Multi_Agent_(ADK_Gemini_AgentTool).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 2923,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_07_Multi_Agent_(ADK_Gemini_Coordinator).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1809,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_07_Multi_Agent_(ADK_Gemini_Loop).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1875,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_07_Multi_Agent_(ADK_Gemini_Parallel).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1841,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_07_Multi_Agent_(ADK_Gemini_Sequential).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 699,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_07_Multi_Agent_(CrewAI_Gemini).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 2803,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "crewai",
+        "dotenv",
+        "langchain_google_genai"
+      ],
+      "env_names": [
+        "GOOGLE_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_08_Memory_(ADK_Explicit_State_Update).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 2423,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_08_Memory_(ADK_LlmAgent_output_key).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1400,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_08_Memory_(ADK_MemoryService_InMemory).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 2,
+      "chars": 1346,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_08_Memory_(ADK_SessionService).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 3,
+      "chars": 1898,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_08_Memory_(LangChain_LangGraph).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 6,
+      "chars": 4950,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "langchain",
+        "langchain_core",
+        "langchain_openai",
+        "langgraph"
+      ],
+      "env_names": [],
+      "stored_errors": [
+        {
+          "cell": 2,
+          "ename": "ModuleNotFoundError",
+          "evalue": "No module named 'langchain_openai'"
+        },
+        {
+          "cell": 3,
+          "ename": "ModuleNotFoundError",
+          "evalue": "No module named 'langchain_openai'"
+        },
+        {
+          "cell": 4,
+          "ename": "NameError",
+          "evalue": "name 'State' is not defined"
+        }
+      ],
+      "colab_identity_metadata": true,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_09_Adaptation_(OpenEvolve).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 405,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "openevolve"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_10_MCP_(ADK_FastMCP_Server).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 898,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_10_MCP_(FastMCP_Client_Agent_init).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 74,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_10_MCP_(FastMCP_Server_Example).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1507,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "fastmcp"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_10_MCP_(Filesystem_Example_agent).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 2,
+      "chars": 2024,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [
+        {
+          "cell": 0,
+          "ename": "ModuleNotFoundError",
+          "evalue": "No module named 'google.adk'"
+        }
+      ],
+      "colab_identity_metadata": true,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_10_MCP_(Filesystem_Example_init).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 63,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_11_Goal_Setting_(Iteration).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 3,
+      "chars": 7854,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "dotenv",
+        "langchain_openai"
+      ],
+      "env_names": [
+        "OPENAI_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": true,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_12_Exception_Handling_(Fallback).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1540,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_13_Human_in_the_Loop_(Customer_Support).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 2811,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_14_Knowledge_Retrieval_(RAG_Google_Search).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 284,
+      "syntax_errors": [
+        {
+          "cell": 0,
+          "msg": "invalid syntax"
+        }
+      ],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_14_Knowledge_Retrieval_(RAG_LangChain).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 4057,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "dotenv",
+        "langchain",
+        "langchain_community",
+        "langchain_core",
+        "langchain_openai",
+        "langgraph",
+        "requests",
+        "weaviate"
+      ],
+      "env_names": [
+        "OPENAI_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_14_Knowledge_Retrieval_(RAG_VertexAI).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1222,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_15_Inter_Agent_(A2A).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 3,
+      "chars": 3263,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [
+        "GOOGLE_API_KEY",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_GENAI_USE_VERTEXAI"
+      ],
+      "stored_errors": [
+        {
+          "cell": 0,
+          "ename": "ModuleNotFoundError",
+          "evalue": "No module named 'google.adk'"
+        }
+      ],
+      "colab_identity_metadata": true,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_15_Inter_Agent_(A2A_AgentCard_WeatherBot).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1311,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_15_Inter_Agent_(Sync_Streaming_Requests).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 830,
+      "syntax_errors": [
+        {
+          "cell": 0,
+          "msg": "unexpected indent"
+        }
+      ],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_16_Resource_Optimization_(Code_Snippets).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 3303,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_16_Resource_Optimization_(OI_Google_Search).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 4739,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "dotenv",
+        "openai",
+        "requests"
+      ],
+      "env_names": [
+        "GOOGLE_CSE_ID",
+        "GOOGLE_CUSTOM_SEARCH_API_KEY",
+        "OPENAI_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_17_Reasoning_(CoT_Prompt).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 4069,
+      "syntax_errors": [
+        {
+          "cell": 0,
+          "msg": "unterminated string literal (detected at line 1)"
+        }
+      ],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_17_Reasoning_(Executing_Code).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 741,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_17_Reasoning_(Google_DeepSearch).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 954,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_17_Reasoning_(Self_Correction).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 3744,
+      "syntax_errors": [
+        {
+          "cell": 0,
+          "msg": "unterminated string literal (detected at line 3)"
+        }
+      ],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_18_Guardrails_(ADK_Validate_Tool).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 1667,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_18_Guardrails_(LLM_as_Guardrail).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 3658,
+      "syntax_errors": [
+        {
+          "cell": 0,
+          "msg": "unterminated string literal (detected at line 7)"
+        }
+      ],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_18_Guardrails_(Practical_Examples).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 13747,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "crewai",
+        "pydantic"
+      ],
+      "env_names": [
+        "GOOGLE_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_19_Evaluation_(Basic_Response_Evaluation).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 2338,
+      "syntax_errors": [],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_19_Evaluation_(LLM_as_Judge).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 6973,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "google"
+      ],
+      "env_names": [
+        "GOOGLE_API_KEY"
+      ],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_20_Prioritization_(SuperSimplePM).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 1,
+      "chars": 7446,
+      "syntax_errors": [],
+      "third_party_imports": [
+        "dotenv",
+        "langchain",
+        "langchain_core",
+        "langchain_openai",
+        "pydantic"
+      ],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    },
+    {
+      "file": "chapter_notebooks/Chapter_21_Exploration_Discovery_(Agent_Laboratory).ipynb",
+      "kind": "chapter_notebook",
+      "cells": 2,
+      "chars": 7130,
+      "syntax_errors": [
+        {
+          "cell": 0,
+          "msg": "expected 'except' or 'finally' block"
+        }
+      ],
+      "third_party_imports": [],
+      "env_names": [],
+      "stored_errors": [],
+      "colab_identity_metadata": false,
+      "classification": "REFERENCE"
+    }
+  ],
+  "skill_companions": {
+    "count": 56,
+    "classification": "GENERATED",
+    "note": "byte-identical to skills/<chapter-id>/SKILL.md when tools/validate.py passes the companion check"
+  },
+  "counts": {
+    "ipynb": 65,
+    "placeholders": 7,
+    "syntax_error_files": 7,
+    "stored_error_files": 5,
+    "colab_identity_files": 7,
+    "skill_companions": 56
+  }
+}
