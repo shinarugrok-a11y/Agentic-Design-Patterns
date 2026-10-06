@@ -3,7 +3,7 @@
 ## Profile
 - Runtime: a general assistant acting for a user (desktop app, chat bot such
   as Grok Bot, browser agent) with tools like email, calendar, files or web.
-- Fallback: STANDUP step 2 assigns this profile when the runtime is unknown.
+- Fallback: AGENTS.md boot step 2 assigns this profile when the runtime is unknown.
 - Context window: unknown. It varies by product and model, so assume it is small.
 - Cost: unknown. Latency matters because a human is waiting.
 - Posture: confirmation-first. Ask rather than assume.

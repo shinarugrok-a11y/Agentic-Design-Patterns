@@ -8,7 +8,7 @@
 - Roles: `executor` by default; `planner` for multi-file changes.
 
 ## Skill budget
-- At most 3 SKILL.md per task (STANDUP step 4). Open `references/patterns.md`
+- At most 3 SKILL.md per task (AGENTS.md boot step 4). Open `references/patterns.md`
   only for the skill you are implementing.
 - Open `references/deep-dive.md` only when writing framework code. Check its
   `Provenance:` labels before copying anything.
