@@ -2,8 +2,11 @@
 
 Source: Chapter 17 + `Chapter_17_Reasoning_(CoT_Prompt)`, `(Self_Correction)`,
 `(Executing_Code)`, `(Google_DeepSearch)`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Techniques (book)
+## Techniques (SOURCE, GT:L10137–L10750; table wording DERIVED)
 | Technique | Idea | Cost |
 |---|---|---|
 | Chain-of-Thought (CoT) | make intermediate steps explicit | + output tokens |
@@ -11,15 +14,16 @@ Source: Chapter 17 + `Chapter_17_Reasoning_(CoT_Prompt)`, `(Self_Correction)`,
 | Self-Correction | critique own draft against requirements, rewrite | 2-3x |
 | ReAct | interleave Thought -> Action (tool) -> Observation | tool calls |
 | Chain of Debates (CoD) | several agents argue to reduce individual bias | N agents |
-| Program-Aided (PAL) | offload computation to executed code | code executor |
+| Program-Aided LMs (PALMs, GT:L10406) | offload computation to executed code | code executor |
 | Scaling Inference Law | more "thinking time" at inference improves quality | latency |
 | MASS | automated optimisation of multi-agent prompts and topology | offline |
 
-Rule of thumb: use when a problem needs decomposition, multi-step logic,
+Rule of thumb (GT:L10906): use when a problem needs decomposition, multi-step logic,
 tool interaction or strategic adaptation, and when the visible "work"
 matters as much as the answer.
 
 ## CoT prompt (Information Retrieval Agent)
+Provenance: SOURCE (abridged) — condensed from GT:L10137–L10170 (book query replaced by `{query}`); not verbatim.
 ```
 You are an Information Retrieval Agent. Your goal is to answer the user's question comprehensively and accurately by thinking step-by-step.
 
@@ -32,11 +36,12 @@ Here's the process you must follow:
 
 **User Query:** "{query}"
 ```
-The notebook shows the model emitting `Thought 1..5` then a final answer;
+The book shows the model emitting `Thought 1..5` (GT:L10179) then a final answer;
 keep the thoughts and answer in clearly labelled sections so callers can
 strip the trace.
 
 ## Self-Correction prompt
+Provenance: SOURCE (abridged) — condensed from GT:L10297–L10330; not verbatim.
 ```
 You are a highly critical and detail-oriented Self-Correction Agent. Review a previously generated piece of content against its original requirements and identify areas for improvement.
 
@@ -49,11 +54,12 @@ You are a highly critical and detail-oriented Self-Correction Agent. Review a pr
 **Original Prompt/Requirements:** "{requirements}"
 **Initial Draft:** "{draft}"
 ```
-Example from the notebook: 150-char social post; the draft "We have new
+Example from the book (GT:L10330–L10382): 150-char social post; the draft "We have new
 products. They are green and techy..." is rewritten into a 148-char post
 that names the eco benefit, adds a CTA and hashtags.
 
 ## ReAct-style research graph (LangGraph, Google DeepSearch)
+Provenance: SOURCE (abridged) — condensed from GT:L10804–L10838; not verbatim.
 ```python
 builder = StateGraph(OverallState, config_schema=Configuration)
 builder.add_node("generate_query", generate_query)
@@ -71,6 +77,9 @@ graph = builder.compile(name="pro-search-agent")
 sufficient (finalize). Bound the loop with an iteration counter in state.
 
 ## Program-aided reasoning (ADK agents as tools)
+Provenance: SOURCE (abridged) — condensed from GT:L10422–L10455; not verbatim. The book passes
+`code_executor=[BuiltInCodeExecutor]` (a class in a list); whether ADK accepts that or needs
+`BuiltInCodeExecutor()` is UNCERTAIN.
 ```python
 search_agent = Agent(model="gemini-2.0-flash", name="SearchAgent",
     instruction="You're a specialist in Google Search", tools=[google_search])
@@ -81,7 +90,7 @@ root_agent = Agent(name="RootAgent", model="gemini-2.0-flash", description="Root
 ```
 Route arithmetic/data work to the code agent instead of reasoning in text.
 
-## Choosing a technique
+## Choosing a technique (DERIVED)
 - Single answer, moderate difficulty -> CoT.
 - Need tools/facts -> ReAct (or the research graph).
 - Draft exists, must meet spec -> Self-Correction (see `reflection`).
@@ -89,22 +98,23 @@ Route arithmetic/data work to the code agent instead of reasoning in text.
 - Numeric/precise -> code execution.
 - High-stakes judgment -> CoD with distinct personas, then arbitrate.
 
-## Pitfalls
+## Pitfalls (DERIVED)
 - Reasoning traces leak into user-facing output; separate sections.
 - Extra tokens on trivial tasks; gate by `resource-aware-optimization`.
 - Models with built-in hidden reasoning may not need explicit CoT; test both.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Chain-of-Thought (CoT)** — one linear sequence of intermediate steps; cheapest, enough when the path does not branch.
 - **Tree-of-Thoughts (ToT)** — branch into candidate thoughts, evaluate, backtrack; wins when the first plausible path is often wrong.
 - **Self-correction / self-refinement** — critique the draft against the original requirements, then rewrite; wins where a quality bar, not a fact, is the hard part.
 - **ReAct** — interleave Thought, Action, Observation so feedback steers the next step; the default once tools or external state are involved.
-- **Program-Aided Language Models (PALM)** — offload arithmetic, symbolic, or data work to generated code, executed deterministically.
+- **Program-Aided Language Models (PALMs)** — offload arithmetic, symbolic, or data work to generated code, executed deterministically.
 - **Self-consistency / multiple candidates** — sample several answers and select one; the Scaling Inference Law in practice, where a small model with a big thinking budget beats a larger one-pass model.
 - **Chain of Debates (CoD), Deep Research** — several diverse models argue to cut single-model bias; or one agent loops search, reflect on gaps, re-search, synthesize under a time budget.
 
 ## More prompt templates
 CoT, numbered stages (the chapter's retrieval agent):
+Provenance: DERIVED — our paraphrase of GT:L10137–L10170.
 ```
 Answer the question by thinking step-by-step.
 1. Analyze the query: key entities and what is actually being asked.
@@ -116,6 +126,7 @@ Query: {question}
 ```
 
 Self-correction over an existing draft:
+Provenance: DERIVED — our paraphrase of GT:L10297–L10330.
 ```
 You are a critical, detail-oriented Self-Correction Agent.
 1. Restate the original requirements and constraints.
@@ -130,7 +141,7 @@ Draft: {draft}
 - **LangChain / LangGraph** — cycles are the point: `add_conditional_edges` from a reflection node back to research turns a chain into deliberation; the loop cap lives in graph config.
 - **Google ADK** — `BuiltInCodeExecutor` for PALM-style execution; `agent_tool.AgentTool` exposes a reasoning specialist as a callable tool of a root agent.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Fluent but wrong traces** — a trace is generated text, not proof, and can rationalize a wrong answer; verify the conclusion independently (code execution, retrieval, a critic pass).
 - **Combinatorial tree explosion** — ToT branching with no evaluator; score each thought, keep top-k, cap depth and total node budget.
 - **ReAct repeating a failed action** — the observation never changes, so neither does the next thought; cap steps, hash (action, args) to detect repeats, and force a different action or a final answer.

@@ -3,7 +3,7 @@ name: a2a
 description: Delegate to remote agents via Agent Cards. Use across processes or vendors. Not for in-process agents.
 role: [executor, planner]
 chapter: 15
-token_cost_estimate: 221
+token_cost_estimate: 226
 chains_with: [multi-agent, exception-handling]
 ---
 
@@ -35,7 +35,7 @@ chains_with: [multi-agent, exception-handling]
 ```python
 card = requests.get(f"{url}/.well-known/agent.json").json()
 resp = requests.post(url, json={"jsonrpc": "2.0", "id": 1,
-    "method": "message/send", "params": {"message": msg}})
+    "method": "sendTask", "params": {"id": tid, "message": msg}})
 ```
 
 ## Next skills

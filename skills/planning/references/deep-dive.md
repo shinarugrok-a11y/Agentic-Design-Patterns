@@ -2,14 +2,18 @@
 
 Source: Chapter 6 + `Chapter_06_Planning_(Code_Example).ipynb`,
 `Chapter_06_Planning_(Deep_Research_API).ipynb`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Rule of thumb (book)
+## Rule of thumb (SOURCE, GT:L4220–L4224)
 Use when a request is too complex for a single action or tool: multi-step
 processes such as producing a research report, onboarding an employee, or a
-competitive analysis. Planning turns a reactive agent into a strategic
-executor that can also adapt its plan.
+competitive analysis. That planning makes an agent strategic and adaptive is
+the chapter's framing (DERIVED wording).
 
 ## Pattern A: plan-then-write in one CrewAI task
+Provenance: SOURCE (abridged) — condensed from GT:L3884–L3921; not verbatim.
 ```python
 from crewai import Agent, Task, Crew, Process
 
@@ -36,6 +40,7 @@ The trick is in `expected_output`: demanding a visible `### Plan` section
 forces the model to plan before it writes.
 
 ## Pattern B: delegated planning agent (OpenAI Deep Research)
+Provenance: SOURCE (abridged) — condensed from GT:L4098–L4175 (`Chapter_06_Planning_(Deep_Research_API).ipynb`); loops and prints removed. `o3-deep-research-2025-06-26` is time-specific (UNCERTAIN today).
 ```python
 response = client.responses.create(
     model="o3-deep-research-2025-06-26",
@@ -57,6 +62,7 @@ Deep Research plans, searches, reflects and revises internally; you inspect
 the trajectory through the typed items in `response.output`.
 
 ## Plan prompt template (explicit planner)
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 Goal: {goal}
 Available tools: {tools}
@@ -66,6 +72,7 @@ inputs (reference earlier step ids), success check. Max {n} steps.
 Return JSON: {"steps": [...]}
 ```
 Re-plan prompt:
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 Plan: {plan}
 Completed: {done}
@@ -74,6 +81,7 @@ Revise the remaining steps. Keep completed steps unchanged.
 ```
 
 ## Execution loop sketch
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```python
 plan = plan_llm(goal, tools)
 for step in plan.steps:
@@ -83,17 +91,17 @@ for step in plan.steps:
         plan = replan_llm(plan, state, step, result)
 ```
 
-## When planning is overkill
+## When planning is overkill (DERIVED)
 - Single tool call answers the request.
 - The pipeline is fixed: encode it directly with `prompt-chaining`.
 - Token budget is tiny; planning tokens exceed the work.
 
-## Related book concepts
+## Related book concepts (SOURCE, GT:L3987–L4031, figures only, no code)
 Google Deep Research: iterative research plans that adapt as information
 is gathered (plan -> search -> reflect -> re-plan). See `reasoning-techniques`
 for the reflection graph.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Plan-then-execute** — one agent emits the plan as its first output, then works it; wins when the "how" must be discovered but the steps are stable once chosen.
 - **Fixed workflow (no planning)** — hard-code the step order when the solution is already well-understood; wins whenever predictability beats flexibility.
 - **Adaptive replanning** — treat the first plan as a starting point and re-derive it when a step's constraint fails (venue unavailable, source missing); wins in dynamic environments.
@@ -102,6 +110,7 @@ for the reflection graph.
 ## More prompt templates
 Force the plan to be a visible artifact, not hidden reasoning:
 
+Provenance: SOURCE (abridged) — task description + expected output from GT:L3910–L3925, reflowed.
 ```
 1. Create a bullet-point plan for a summary on the topic: '{topic}'.
 2. Write the summary based on your plan, keeping it around 200 words.
@@ -112,6 +121,7 @@ Expected output — a final report with two distinct sections, "### Plan"
 
 Machine-checkable plan, so each step can be validated before execution:
 
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 Goal: {goal}
 Tools available: {tool_names}
@@ -123,6 +133,7 @@ Do not include a step whose action is not in the tool list.
 
 Research-agent persona:
 
+Provenance: SOURCE — lines found verbatim in GT:L4094–L4096.
 ```
 You are a professional researcher preparing a structured, data-driven report.
 Focus on data-rich insights, use reliable sources, and include inline citations.
@@ -130,10 +141,10 @@ Focus on data-rich insights, use reliable sources, and include inline citations.
 
 ## Framework notes
 - **LangChain / LangGraph** — present only as the model binding (`ChatOpenAI`) given to the planning agent.
-- **Google ADK** — no ADK planner here; the chapter uses Gemini Deep Research, which plans, searches, reflects on gaps, and replans asynchronously.
+- **Google ADK** — no ADK planner in this chapter; Google Deep Research is described with screenshots only (GT:L3987–L4031).
 - **CrewAI** — `Agent` + `Task` + `Process.sequential`; the plan is produced by prompt shape (`description` / `expected_output`), not by a dedicated planner class.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Over-planning trivial tasks** — planning is a tool, not a default. If the "how" is already known, use a fixed workflow; the cost is tokens, latency, and unpredictable behavior.
 - **Plan assumes tools or data that do not exist** — pass the real tool registry into the plan prompt and reject any step whose `action` is not in it before execution begins.
 - **No replanning hook** — check each step's `done_when` against the actual result and call `replan(goal, done, failure)` on mismatch, instead of running the remaining steps against a stale world.

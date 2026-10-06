@@ -2,7 +2,8 @@
 
 Offline stub of the protocol shape: the server publishes a tool schema
 (`tools/list`), the client filters it (least privilege) and invokes tools
-by name (`tools/call`). Swap in FastMCP + MCPToolset for the real thing.
+by name (`tools/call`). Those two method names come from the MCP spec, not
+the book (EXTERNAL-UNVERIFIED). Swap in FastMCP + MCPToolset for the real thing.
 """
 import inspect
 import json

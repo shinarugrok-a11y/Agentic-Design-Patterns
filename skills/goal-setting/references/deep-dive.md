@@ -1,8 +1,11 @@
 # Goal Setting and Monitoring — deep dive
 
 Source: Chapter 11 + `Chapter_11_Goal_Setting_(Iteration).ipynb` (Mahtab Syed, MIT).
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Rule of thumb (book)
+## Rule of thumb (SOURCE, GT:L7485–L7512)
 Use when an agent must autonomously execute a multi-step task, adapt to
 dynamic conditions and reliably reach a specific high-level objective
 without constant human intervention. Goals should be SMART (specific,
@@ -12,6 +15,7 @@ agent revise, adapt or escalate. In ADK, goals live in agent instructions
 and monitoring is done through state and tool interactions.
 
 ## Notebook architecture: goal-driven code agent
+Provenance: DERIVED — our flow summary of the book listing GT:L7100–L7335.
 ```
 use_case + goals
    -> generate_prompt(use_case, goals, previous_code, feedback)
@@ -23,6 +27,7 @@ use_case + goals
 ```
 
 ### Generation prompt
+Provenance: SOURCE (abridged) — condensed from GT:L7159–L7184; not verbatim.
 ```python
 base_prompt = f"""
 You are an AI coding agent. Your job is to write Python code based on the following use case:
@@ -38,6 +43,7 @@ base_prompt += "\nPlease return only the revised Python code. Do not include com
 ```
 
 ### Feedback (monitor) prompt
+Provenance: SOURCE — lines found verbatim in GT:L7166–L7198.
 ```python
 feedback_prompt = f"""
 You are a Python code reviewer. A code snippet is shown below. Based on the following goals:
@@ -52,6 +58,7 @@ Code:
 ```
 
 ### Judge prompt (boolean stop condition)
+Provenance: SOURCE (abridged) — condensed from GT:L7166–L7226; not verbatim.
 ```python
 review_prompt = f"""
 You are an AI reviewer.
@@ -72,6 +79,7 @@ return llm.invoke(review_prompt).content.strip().lower() == "true"
 ```
 
 ### Loop
+Provenance: SOURCE (abridged) — condensed from GT:L7292–L7335 (print lines dropped); not verbatim.
 ```python
 for i in range(max_iterations):
     code = clean_code_block(llm.invoke(generate_prompt(use_case, goals, previous_code, feedback)).content)
@@ -82,14 +90,14 @@ for i in range(max_iterations):
 final = add_comment_header(code, use_case)
 save_code_to_file(final, use_case)      # llm-derived short filename + random suffix
 ```
-Helpers: `clean_code_block` strips ``` fences; `to_snake_case`; filename
-from an LLM summary (<=10 chars) plus a 4-digit suffix.
+Helpers (SOURCE, GT:L7230–L7270): `clean_code_block` strips ``` fences; `to_snake_case`;
+filename from an LLM summary (<=10 chars) plus a 4-digit suffix.
 
-### Example goals used
+### Example goals used (SOURCE, GT:L7346–L7348)
 "Code simple to understand, Functionally correct, Handles comprehensive edge
 cases, Takes positive integer input only, prints the results with few examples"
 
-## Design notes
+## Design notes (DERIVED)
 - Separate *feedback* (rich critique) from *judgment* (strict boolean); the
   boolean makes termination reliable.
 - Restate goals in every prompt; do not rely on history.
@@ -97,12 +105,12 @@ cases, Takes positive integer input only, prints the results with few examples"
 - Goals that conflict ("simple" vs "comprehensive edge cases") need priority
   ordering (see `prioritization`).
 
-## Monitoring signals beyond LLM judgment
+## Monitoring signals beyond LLM judgment (DERIVED)
 Unit tests, schema validation, latency/cost counters, tool return codes,
 state flags (`state["status"] == "completed"`). Prefer deterministic checks
 when available; use the LLM judge for qualitative goals.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Generate → critique → binary judge** — a generator produces the artifact, a reviewer critiques it against the goal list, a third call answers only `True`/`False`; wins when success is subjective but describable, because the judge gives the loop a parsable stop condition.
 - **Checklist goal object** — `{objective, done_when: [...], max_steps}` with machine-checkable predicates; wins when criteria are observable facts and no LLM judge is needed.
 - **Per-step monitoring** — re-evaluate after every action instead of once at the end, feeding the critique back into the next generation prompt; wins for long autonomous runs where drift compounds.
@@ -111,6 +119,7 @@ when available; use the LLM judge for qualitative goals.
 
 ## More prompt templates
 Generation, carrying the previous attempt and its critique:
+Provenance: SOURCE — lines found verbatim in GT:L7160–L7185.
 ```
 You are an AI coding agent. Your job is to write Python code based on the following use case:
 
@@ -130,6 +139,7 @@ outside the code.
 ```
 
 Critique against the goals (separate call from the generator):
+Provenance: SOURCE — lines found verbatim in GT:L7193–L7199.
 ```
 You are a Python code reviewer. A code snippet is shown below. Based on the following goals:
 - {goal_1}
@@ -141,6 +151,7 @@ Code:
 ```
 
 Binary judge — the stop condition:
+Provenance: SOURCE (abridged) — condensed from GT:L7214–L7226; not verbatim.
 ```
 You are an AI reviewer.
 Here are the goals:
@@ -152,10 +163,11 @@ Respond with only one word: True or False.
 ```
 
 ## Framework notes
-- **LangChain / LangGraph** — `ChatOpenAI(model="gpt-4o", temperature=0.3)` with three distinct `invoke` calls (generate, critique, judge); no chain object is used, the loop is a `for` in Python.
-- **Google ADK** — not used in this chapter.
+- **LangChain** (SOURCE, GT:L7144–L7148) — `ChatOpenAI(model="gpt-4o", temperature=0.3)` with three distinct `invoke` calls (generate, critique, judge); no chain object is used, the loop is a `for` in Python.
+- **Google ADK** — no ADK code in this chapter; the takeaways say ADK goals are
+  conveyed through agent instructions (GT:L7512).
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Unmeasurable goals** — goals like "handles comprehensive edge cases" cannot terminate a loop on their own. Force the judge into one word and compare `== "true"`, so ambiguity keeps iterating instead of falsely stopping.
 - **Monitoring only at the end** — run the critique inside every iteration and append it to the next generation prompt; late detection leaves no budget to correct.
 - **Success declared without verification** — never let the call that produced the artifact also rule on it. Keep the generator, reviewer, and judge as separate calls with separate prompts.

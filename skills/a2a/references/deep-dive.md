@@ -2,8 +2,11 @@
 
 Source: Chapter 15 + `Chapter_15_Inter_Agent_(A2A_AgentCard_WeatherBot)`,
 `Chapter_15_Inter_Agent_(A2A)`, `Chapter_15_Inter_Agent_(Sync_Streaming_Requests)`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Protocol essentials (book)
+## Protocol essentials (SOURCE, GT:L8838–L8981, L9318–L9355)
 - Open, HTTP/JSON-RPC based; agents on different frameworks interoperate.
 - **Agent Card**: JSON identity file (capabilities, skills, endpoint, auth).
 - Interaction modes: synchronous request/response (`tasks/send` /
@@ -13,12 +16,16 @@ Source: Chapter 15 + `Chapter_15_Inter_Agent_(A2A_AgentCard_WeatherBot)`,
 - Security: mTLS, explicit authentication schemes in the card.
 - A2A (agent <-> agent tasks) complements MCP (LLM <-> tools/resources).
 - Tooling: Trickle AI for visualising A2A traffic.
+- Method names: the book's examples use `sendTask`/`sendTaskSubscribe`
+  (GT:L8988–L9026), its takeaways `tasks/send`/`tasks/sendSubscribe` (GT:L9326).
+  Which the current spec uses is EXTERNAL-UNVERIFIED; check the live spec.
 
-Rule of thumb: orchestrate two or more agents built with different
+Rule of thumb (GT:L9297): orchestrate two or more agents built with different
 frameworks (ADK, LangGraph, CrewAI), or when an agent must discover and
 consume other agents' capabilities dynamically.
 
 ## Agent Card (WeatherBot)
+Provenance: SOURCE — lines found verbatim in GT:L8850–L8909, `Chapter_15_Inter_Agent_(A2A_AgentCard_WeatherBot).ipynb`.
 ```json
 {
   "name": "WeatherBot",
@@ -45,6 +52,7 @@ consume other agents' capabilities dynamically.
 `skills[].examples` double as routing hints for client agents.
 
 ## Server: ADK agent exposed over A2A
+Provenance: SOURCE (abridged) — condensed from GT:L9125–L9234; not verbatim.
 ```python
 async def create_agent(client_id, client_secret) -> LlmAgent:
     toolset = CalendarToolset(client_id=client_id, client_secret=client_secret)
@@ -82,6 +90,7 @@ def main(host, port):
 
 ## Client requests (JSON-RPC)
 Synchronous:
+Provenance: SOURCE — lines found verbatim in GT:L8988–L9004.
 ```json
 {"jsonrpc": "2.0", "id": "1", "method": "sendTask",
  "params": {"id": "task-001", "sessionId": "session-001",
@@ -89,6 +98,7 @@ Synchronous:
    "acceptedOutputModes": ["text/plain"], "historyLength": 5}}
 ```
 Streaming:
+Provenance: SOURCE — lines found verbatim in GT:L9004–L9026.
 ```json
 {"jsonrpc": "2.0", "id": "2", "method": "sendTaskSubscribe",
  "params": {"id": "task-002", "sessionId": "session-001",
@@ -99,6 +109,7 @@ Reuse `sessionId` across turns; `historyLength` bounds the context the
 server replays.
 
 ## Client-side discovery loop
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 GET {agent_url}/.well-known/agent.json  -> AgentCard
 match user intent to card.skills (id/description/examples)
@@ -106,13 +117,13 @@ POST sendTask (or sendTaskSubscribe if capabilities.streaming)
 handle task.state: completed | input-required (ask user, resend) | failed
 ```
 
-## Checklist
+## Checklist (DERIVED)
 - Advertise only skills the executor implements.
 - Streaming for anything longer than a few seconds.
 - Auth scheme declared in card and enforced by the server.
 - Separate ports/hosts per agent for independent scaling.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Synchronous request/response** — `sendTask` / `tasks/send`; client blocks for one complete answer. Quick lookups.
 - **Asynchronous polling** — server returns `working` plus a task id at once, client polls to `completed` or `failed`; the safe default for long work.
 - **Streaming (SSE)** — `sendTaskSubscribe` / `tasks/sendSubscribe` holds one server-to-client connection and pushes incremental artifacts; use when partial results are useful.
@@ -121,6 +132,7 @@ handle task.state: completed | input-required (ask user, resend) | failed
 
 ## More prompt templates
 Client agent, delegation policy:
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 Before delegating, fetch the peer's Agent Card and confirm a skill whose
 description and examples cover this request. If none does, do not delegate.
@@ -133,7 +145,7 @@ the same task with the same contextId, never in a new task.
 - **Google ADK** — `AgentSkill` / `AgentCard` / `AgentCapabilities` describe the agent; `A2AStarletteApplication` + `DefaultRequestHandler` + `InMemoryTaskStore` serve it.
 - **MCP contrast** — MCP standardizes an agent's access to tools and data; A2A standardizes task delegation between agents. They compose.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Card overstates capabilities** — skills advertised but unimplemented, or `streaming: true` on a server that never emits SSE; match the request against skill `examples` and treat a first delegation as a probe with a fallback.
 - **Orphaned tasks on partition** — a polled task stays `submitted`/`working` forever; set a client-side deadline per task id, and prefer push notifications so completion survives a dropped client.
 - **Context lost at `input-required`** — the reply opens a fresh task; carry the server-generated `contextId` and original task id on every follow-up, with `historyLength` set to replay the thread.

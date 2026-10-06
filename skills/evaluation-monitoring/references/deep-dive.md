@@ -2,8 +2,11 @@
 
 Source: Chapter 19 + `Chapter_19_Evaluation_(Basic_Response_Evaluation)`,
 `Chapter_19_Evaluation_(LLM_as_Judge)`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Why (book)
+## Why (SOURCE, GT:L11915–L11935, L12408–L12481, L12518–L12533)
 Agents are probabilistic and operate in changing environments; traditional
 tests are insufficient. Needed: continuous assessment of effectiveness,
 efficiency and adherence to operational/safety requirements; detection of
@@ -12,11 +15,11 @@ collaborative success in multi-agent systems. Evolving idea: agents as
 "contractors" bound by formal, verifiable contracts (deliverables, scope,
 negotiation, self-validation).
 
-Rule of thumb: production agents where reliability matters; A/B comparison
+Rule of thumb (GT:L12536): production agents where reliability matters; A/B comparison
 of versions; regulated/high-stakes domains; drift-prone environments;
 evaluating trajectories and subjective qualities.
 
-## Metric layers
+## Metric layers (snippet names SOURCE; table DERIVED)
 | Layer | Metric | Notebook snippet |
 |---|---|---|
 | Accuracy | exact/semantic match vs ground truth | `evaluate_response_accuracy` |
@@ -26,6 +29,7 @@ evaluating trajectories and subjective qualities.
 | Quality | rubric score by LLM judge | `LLMJudgeForLegalSurvey` |
 
 ### Basic snippets
+Provenance: SOURCE (abridged) — condensed from GT:L11960–L12025, `Chapter_19_Evaluation_(Basic_Response_Evaluation).ipynb`; not verbatim.
 ```python
 def evaluate_response_accuracy(agent_output: str, expected_output: str) -> float:
     return 1.0 if agent_output.strip().lower() == expected_output.strip().lower() else 0.0
@@ -44,6 +48,7 @@ class LLMInteractionMonitor:
 ```
 
 ## LLM-as-a-Judge (rubric)
+Provenance: SOURCE (abridged) — condensed from GT:L12099–L12157 (`LEGAL_SURVEY_RUBRIC`); not verbatim.
 ```
 You are an expert legal survey methodologist and a critical legal reviewer. Evaluate the quality of a given legal survey question.
 Provide a score from 1 to 5 for overall quality, along with a detailed rationale and specific feedback.
@@ -55,6 +60,7 @@ Provide a score from 1 to 5 for overall quality, along with a detailed rationale
 **Output Format:** JSON with keys `overall_score` (int 1-5), `rationale`, `detailed_feedback` (per criterion),
 `concerns` (legal/ethical/methodological), `recommended_action` ("Revise for neutrality", "Approve as is", "Clarify scope").
 ```
+Provenance: SOURCE (abridged) — condensed from GT:L12159–L12224; not verbatim.
 ```python
 class LLMJudgeForLegalSurvey:
     def __init__(self, model_name="gemini-1.5-flash-latest", temperature=0.2):   # low temp for consistency
@@ -71,30 +77,30 @@ Test set in the notebook: a well-formed Likert question (good), a leading
 "Don't you agree that..." question (biased), "What are your thoughts on
 legal tech?" (vague).
 
-## ADK evaluation tooling (book)
+## ADK evaluation tooling (SOURCE, GT:L12355–L12369, L12489–L12502)
 - Test files (single session, unit-level) and evalset files (multi-session
   integration) define expected behaviour incl. tool trajectories.
 - Run via web UI (interactive), `pytest` (CI/CD) or CLI.
 
-## Trajectory evaluation
+## Trajectory evaluation (SOURCE, GT:L12346–L12352; last sentence DERIVED)
 Compare the sequence of tool calls/decisions with a reference path:
 exact match, in-order match, any-order match, precision/recall of tools
 used. A correct final answer reached by a wasteful or unsafe trajectory
 should still fail.
 
-## Monitoring in production
+## Monitoring in production (DERIVED; alerts/KPIs and drift: GT:L11928–L11934)
 Dashboards for latency, token cost, error rate, guardrail blocks,
 escalation rate; alerts on drift; sampled LLM-judge scoring; A/B routing of
 versions. Feed results to `reflection` (per-output) and
 `learning-adaptation` (per-version).
 
-## Checklist
+## Checklist (DERIVED)
 - Use semantic or rubric scoring for natural-language answers.
 - Calibrate the judge against a small human-labelled set.
 - Log trajectories, not just answers.
 - Track tokens with the provider's counter, not `split()`.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Response scoring** — compare the final answer to ground truth; exact match is the floor, cheap and brittle.
 - **Trajectory evaluation** — compare the actual tool-call sequence to the ideal one via exact match, in-order match (extra steps allowed), any-order match, precision, recall, or single-tool use. Exact for high-stakes, in-order for flexible flows.
 - **LLM-as-a-judge** — rubric-scored grading for qualities no string metric captures (clarity, neutrality, helpfulness).
@@ -106,6 +112,7 @@ versions. Feed results to `reflection` (per-output) and
 ## More prompt templates
 LLM-as-a-judge rubric (shape of `LEGAL_SURVEY_RUBRIC`); run at `temperature=0.2` or lower:
 
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 You are an expert <domain> reviewer. Evaluate the <artifact> below.
 Score each criterion 1-5 (1 = <worst case>, 3 = <adequate>, 5 = <ideal>):
@@ -120,11 +127,11 @@ improvement), concerns (list), recommended_action ("Revise for neutrality" |
 ```
 
 ## Framework notes
-- **Google ADK** — `adk web` records sessions into an evalset, `AgentEvaluator.evaluate` runs under pytest in CI, `adk eval` runs in builds. A one-session `.test.json` unit-tests development; a multi-session `.evalset.json` covers integration. Each turn declares query, expected tool trajectory, and reference response; criteria live in `test_config.json`.
+- **Google ADK** — `adk web` records sessions into an evalset, `AgentEvaluator.evaluate` runs under pytest in CI, `adk eval` runs in builds. A single-session JSON test file unit-tests development; a multi-session evalset file covers integration (exact file extensions UNCERTAIN; book GT:L12355–L12369). Each turn declares query, expected tool trajectory, and reference response; criteria live in `test_config.json`.
 - **google-generativeai** — the judge is a `GenerativeModel` given the rubric and asked for JSON; catch `json.JSONDecodeError` and empty responses.
 - **LangChain / LangGraph** — not used here; attach the same metric functions to the chain's callbacks.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Only final answers scored** — a right answer reached by a wrong path still passes; capture the trajectory and diff it against ground-truth tool calls.
 - **Judge inherits generator bias** — same model family, same blind spots; use a different (often smaller) judge model, a written rubric rather than a holistic score, and several reviewer personas.
 - **Metrics stop tracking value** — exact match rewards phrasing, not correctness ("Paris is the capital of France" scores 0.0 against "The capital of France is Paris"); pair it with rubric scoring and refresh test cases as the environment shifts.

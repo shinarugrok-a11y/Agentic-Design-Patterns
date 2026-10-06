@@ -14,7 +14,7 @@ Propose one focused change. Return only the full new program.
 ```
 
 ## Key APIs
-- OpenEvolve: `OpenEvolve(program_path, evaluator_path, config)`; `run(iterations=)`.
+- OpenEvolve: `OpenEvolve(initial_program_path=, evaluation_file=, config_path=)`; `run(iterations=)`.
 - SICA: self-improving coding agent cycle (evaluate -> edit self -> re-evaluate).
 - AlphaEvolve: LLM ensemble + evaluators as evolutionary search.
 

@@ -16,9 +16,9 @@ Question: {question}
 ```
 
 ## Key APIs
-- LangChain: `RecursiveCharacterTextSplitter`, `WeaviateVectorStore`, `retriever.invoke(q)`.
+- LangChain (book): `CharacterTextSplitter(500, 50)`, `Weaviate.from_documents`, `retriever.invoke(q)`.
 - LangGraph: `retrieve -> generate` graph with `StateGraph`.
-- ADK: `VertexAiRagMemoryService`, `VSearchAgent` for managed retrieval.
+- ADK: `VertexAiRagMemoryService`; `VSearchAgent` is Ch 5 (`tool-use`).
 
 ## Pitfalls -> fixes
 - Facts split across chunks -> overlap + larger chunks.
