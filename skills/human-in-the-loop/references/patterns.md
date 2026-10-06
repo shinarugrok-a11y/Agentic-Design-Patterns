@@ -3,8 +3,8 @@
 ## Pattern
 1. Define escalation triggers (refund, threat, low confidence).
 2. Expose escalation as a tool the agent can call.
-3. Hand off full context; wait for decision.
-4. Record approval and continue or stop.
+3. Hand off full context; status `pending_human` until a reply.
+4. Execute only on explicit APPROVE; anything else denies.
 
 ## Prompt template
 ```
@@ -14,9 +14,9 @@ call escalate_to_human with the issue type and stop.
 ```
 
 ## Key APIs
-- ADK: `LlmAgent(tools=[troubleshoot, create_ticket, escalate_to_human])` with escalation rules in `instruction`.
-- Personalisation: `before_agent_callback` injects `state['customer_name']`.
-- Confirmation gate: `propose -> confirm(bool) -> execute`.
+- ADK (book): `Agent(tools=[troubleshoot_issue, create_ticket, escalate_to_human])`, rules in `instruction`.
+- The book's `escalate_to_human` is a stub: no human gate.
+- Confirmation gate: `propose -> pending_human -> APPROVE -> execute`.
 
 ## Pitfalls -> fixes
 - Over-escalation -> tighten triggers, sample audits.

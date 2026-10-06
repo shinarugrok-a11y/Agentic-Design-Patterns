@@ -1,9 +1,26 @@
 """Human-in-the-loop: escalation policy + confirmation gate for risky actions.
 
-Offline stub. `ask_human` is replaced by a real channel (UI, ticket queue,
-chat). Silence or timeout is never treated as approval.
+Offline stub (DERIVED). The book's `escalate_to_human` (Ch 13, GT:L7997-L7999)
+is a placeholder that returns "success" with no human involved; this stub
+does not copy that. Rules enforced here:
+
+- An escalated action never runs until a human explicitly replies APPROVE.
+- With no approval channel attached (the default), the result is
+  `pending_human`: the action is held, not executed and not approved.
+- A channel that times out, returns nothing, or returns anything other than
+  APPROVE yields `denied`.
+
+`approver` is injectable: a callable taking the hand-off dict and returning
+the human's reply (str), returning None, or raising TimeoutError. Replace it
+with a real channel (UI, ticket queue, chat).
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Callable, Optional
+
+ALWAYS_CONFIRM = {"send_email", "send_message", "pay", "refund", "delete_account",
+                  "share", "publish", "schedule_for_others"}
+
+Approver = Callable[[dict], Optional[str]]
 
 
 @dataclass
@@ -13,8 +30,23 @@ class Action:
     irreversible: bool
     confidence: float
 
+    def __post_init__(self):
+        if not self.name or not self.target:
+            raise ValueError("action name and target are required")
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("confidence must be in [0, 1]")
 
-def should_escalate(action: Action, threshold: float = 0.8) -> str | None:
+
+@dataclass
+class Outcome:
+    status: str                      # executed | pending_human | denied
+    detail: str
+    audit: list = field(default_factory=list)
+
+
+def should_escalate(action: Action, threshold: float = 0.8) -> Optional[str]:
+    if action.name in ALWAYS_CONFIRM:
+        return f"{action.name} acts on someone's behalf and requires confirmation"
     if action.irreversible:
         return "irreversible action requires confirmation"
     if action.confidence < threshold:
@@ -22,30 +54,48 @@ def should_escalate(action: Action, threshold: float = 0.8) -> str | None:
     return None
 
 
-def ask_human(prompt: str, scripted_reply: str | None) -> str:
-    """Stand-in for a real human channel; None simulates a timeout."""
-    print("HUMAN? " + prompt)
-    return scripted_reply or "TIMEOUT"
-
-
 def execute(action: Action) -> str:
     return f"executed {action.name} on {action.target}"
 
 
-def run(action: Action, context: dict, scripted_reply: str | None = None) -> str:
+def run(action: Action, context: dict, approver: Optional[Approver] = None) -> Outcome:
     reason = should_escalate(action)
     if reason is None:
-        return execute(action)
-    handoff = (f"{reason}. Proposed: {action.name} on {action.target}. "
-               f"Context: {context}. Reply APPROVE to proceed.")
-    reply = ask_human(handoff, scripted_reply)
-    if reply.strip().upper() == "APPROVE":
-        return execute(action) + " (human approved)"
-    return f"no-op: awaiting human decision (reply={reply!r}); case logged"
+        return Outcome("executed", execute(action), ["auto: low risk, in policy"])
+    handoff = {"reason": reason, "action": action.name, "target": action.target,
+               "context": context, "reply_with": "APPROVE to proceed; anything else denies"}
+    audit = [f"escalated: {reason}"]
+    if approver is None:
+        audit.append("no approval channel attached; action held")
+        return Outcome("pending_human", f"awaiting human decision on {action.name}", audit)
+    try:
+        reply = approver(handoff)
+    except TimeoutError:
+        reply = None
+    if reply is None or reply.strip().upper() != "APPROVE":
+        audit.append(f"denied (reply={reply!r}); no answer means no")
+        return Outcome("denied", f"not executed: {action.name}", audit)
+    audit.append("human approved")
+    return Outcome("executed", execute(action) + " (human approved)", audit)
+
+
+def timed_out(_handoff: dict) -> Optional[str]:
+    raise TimeoutError
 
 
 if __name__ == "__main__":
     ctx = {"customer": "Jane", "tier": "gold", "steps_tried": ["restart", "reinstall"]}
-    print(run(Action("send_email", "jane@example.com", irreversible=False, confidence=0.95), ctx))
-    print(run(Action("refund", "order-42", irreversible=True, confidence=0.99), ctx, scripted_reply="APPROVE"))
-    print(run(Action("delete_account", "jane", irreversible=True, confidence=0.99), ctx))
+    cases = [
+        (Action("read_calendar", "jane", irreversible=False, confidence=0.95), None),
+        (Action("send_email", "jane@example.com", irreversible=True, confidence=0.99), None),
+        (Action("refund", "order-42", irreversible=True, confidence=0.99), timed_out),
+        (Action("refund", "order-42", irreversible=True, confidence=0.99), lambda h: None),
+        (Action("delete_account", "jane", irreversible=True, confidence=0.99), lambda h: "maybe"),
+        (Action("refund", "order-42", irreversible=True, confidence=0.99), lambda h: "APPROVE"),
+    ]
+    results = []
+    for action, approver in cases:
+        out = run(action, ctx, approver)
+        results.append(out.status)
+        print(f"{action.name:15} -> {out.status:14} {out.detail}")
+    assert results == ["executed", "pending_human", "denied", "denied", "denied", "executed"], results

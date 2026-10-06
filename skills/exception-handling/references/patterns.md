@@ -2,24 +2,24 @@
 
 ## Pattern
 1. Classify errors: transient, deterministic, needs-human.
-2. Retry transient with backoff; never retry deterministic.
+2. Retry transient errors (capped); never repeat an invalid action.
 3. Fallback path with a degraded but useful result.
 4. Return structured error reports.
 
 ## Prompt template
 ```
-Primary: Use get_precise_location. If it fails, return the error verbatim.
-Fallback: Read {location}. Only if it is an error, call get_general_area.
-Responder: Report the result and whether a fallback was used.
+Primary: Use get_precise_location_info with the user's address.
+Fallback: Check state["primary_location_failed"]. If True, call get_general_area_info.
+Responder: Present state["location_result"]; if empty, apologize.
 ```
 
 ## Key APIs
-- ADK: `SequentialAgent([primary, fallback, responder])` sharing `output_key='location'`.
-- Tools return `{'status': 'error', 'error_message': ...}` for expected failures; raise for bugs.
-- Retry: exponential backoff, jitter, max attempts.
+- ADK (book): `SequentialAgent(sub_agents=[primary_handler, fallback_handler, response_agent])`.
+- The book never defines the tools or what sets `primary_location_failed`; write that yourself.
+- Tools return `{'status': 'error', ...}` for expected failures; raise for bugs.
 
 ## Pitfalls -> fixes
-- Fallback fires on success -> condition on the error field.
+- Fallback fires on success -> condition on the failure flag.
 - Retrying bad args -> classify first.
 - Errors as data -> structured status.
 

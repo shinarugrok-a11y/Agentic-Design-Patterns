@@ -3,7 +3,7 @@ name: exception-handling
 description: Detect, retry, fall back, escalate. Use around anything that can fail. Not for deterministic errors.
 role: [safety]
 chapter: 12
-token_cost_estimate: 227
+token_cost_estimate: 233
 chains_with: [human-in-the-loop, guardrails]
 ---
 
@@ -33,10 +33,11 @@ chains_with: [human-in-the-loop, guardrails]
 
 ## Minimal example
 ```python
-primary  = LlmAgent(name="primary", tools=[precise_location], output_key="loc")
-fallback = LlmAgent(name="fallback", tools=[general_area],
-    instruction="Only if {loc} is an error, call general_area")
+primary  = Agent(name="primary", tools=[get_precise_location_info])
+fallback = Agent(name="fallback", tools=[get_general_area_info],
+    instruction='If state["primary_location_failed"]: get_general_area_info')
 root = SequentialAgent(sub_agents=[primary, fallback, responder])
+# the book never sets the flag; your tool must
 ```
 
 ## Next skills
