@@ -94,7 +94,7 @@ GitHub Issues and Discussions are disabled on this repository (`has_issues: fals
 
 - **Authoritative book text.** `Agentic_Design_Patterns_Complete.pdf` and the pdftotext extract under `ground-truth/`. The acknowledgment names Antonio Gulli as the author, thanks Springer, and credits Marco Fago (code, diagrams, review) and Mahtab Syed (coding), among others.
 - **Derived skill library.** `skills/`, `manifest.json`, `AGENTS.md`, the generated indexes, and `models/` compress each chapter into an agent-loadable card and an offline stub. They are derived notes, not a second copy of the book.
-- **Notebook mirror.** `chapter_notebooks/*.ipynb` arrived with the original repository commits by Elias Albittar / Elias Al-bittar (`evoiz963@gmail.com`). Some cells carry `Copyright (c) 2025 Marco Fago` and point at a `LICENSE` file that is not in the tree. The book text itself also contains those copyright headers inside code listings.
+- **Notebook mirror.** `chapter_notebooks/*.ipynb` arrived with the original repository commits by Elias Albittar / Elias Al-bittar (contact details omitted here; see git history). Some cells carry `Copyright (c) 2025 Marco Fago` and point at a `LICENSE` file that is not in the tree. The book text itself also contains those copyright headers inside code listings.
 - **Generated duplicates.** `chapter_notebooks/Chapter_*.SKILL.md` copies of `skills/<id>/SKILL.md`, maintained by `tools/validate.py`.
 - **Audit record.** `validation/audit/` is the 2026-09-23 evidence pass: what was checked, what was corrected, and what is still uncertain.
 

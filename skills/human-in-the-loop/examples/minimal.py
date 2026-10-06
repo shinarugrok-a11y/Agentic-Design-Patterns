@@ -75,8 +75,8 @@ def run(action: Action, context: dict, approver: Optional[Approver] = None) -> O
     if reply is None or reply.strip().upper() != "APPROVE":
         audit.append(f"denied (reply={reply!r}); no answer means no")
         return Outcome("denied", f"not executed: {action.name}", audit)
-    audit.append("human approved")
-    return Outcome("executed", execute(action) + " (human approved)", audit)
+    audit.append("approver replied APPROVE")
+    return Outcome("executed", execute(action) + " (approver replied APPROVE)", audit)
 
 
 def timed_out(_handoff: dict) -> Optional[str]:
@@ -98,4 +98,6 @@ if __name__ == "__main__":
         out = run(action, ctx, approver)
         results.append(out.status)
         print(f"{action.name:15} -> {out.status:14} {out.detail}")
-    assert results == ["executed", "pending_human", "denied", "denied", "denied", "executed"], results
+    # The APPROVE case uses a scripted approver; a real deployment needs a human on the channel.
+    if results != ["executed", "pending_human", "denied", "denied", "denied", "executed"]:
+        raise SystemExit(f"HITL gate wrong: {results}")

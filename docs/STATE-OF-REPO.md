@@ -24,13 +24,13 @@ Status as of the latest commit on this branch; a commit named only by subject is
 | G7 source slices do not exist | CLOSED (branch) | "Route correction" generates `ground-truth/INDEX.md`: line ranges for chapters 1–21, appendices A–G, Glossary and Index of Terms. The validator checks it matches the text, and `AGENTS.md` step 5 points to it. Ranges spot-checked against the text (for example Ch 1 starts at GT:L696, Appendix A at 13596) |
 | G8 appendices have no skills | OPEN | — |
 | G9 duplicate notebook companions | OWNER-DECISION | — |
-| G10 open security / review findings | OPEN | `eval` example, IDOR, validator path traversal, `ground-truth/README` output path |
+| G10 open security / review findings | CLOSED (branch) | "Close blockers" commit, each re-verified first. PR #2: the `eval` calculator is replaced by an AST arithmetic-only evaluator that self-tests hostile inputs; the IDOR guard fails closed (see G15c); `sync()` refuses unsafe manifest ids or chapters before writing anything (tested with `../../evil`: exit 1, nothing written). PR #3 (Codex): the `ground-truth/README.md` command now writes `ground-truth/agentic_design_patterns.txt` from the repo root |
 | G11 behavioural stand-up test | OPEN | `8a14d56` adds a deterministic routing-table test only |
 | G12 LICENSE | OWNER-DECISION | — |
 | G13 validator honesty + fixtures | OPEN | — |
-| G14 one gate policy | OPEN | — |
-| G15 examples execute / fail open | OPEN (partial) | (a) HITL `send_email` is held as `pending_human` (`9329676`, re-checked); (b) the MCP `assert` was replaced by `PermissionError` (`1a4d323`, re-checked under `python -O`), but `tool_filter=[]` still exposes all tools; (c) the IDOR guard still fails open |
-| G16 personal identifiers | OWNER-DECISION | Colab ids are in frozen notebooks. PR #4's README email is also on this branch's README (line 92) via the fold-in |
+| G14 one gate policy | OPEN (partial) | "Close blockers" unifies the irreversible-action rule in `models/grok-4-6.md` (dropped "unless the plan authorises"), `fable-5-1.md`, `muse.md` and the HITL deep-dive: a per-action human APPROVE, where a plan, standing pre-approval, silence or a timeout never counts. The single gates template is still to come |
+| G15 examples execute / fail open | CLOSED (branch) | (a) HITL `send_email` is held as `pending_human` (`9329676`, re-checked by the fixture); the APPROVE output now says "approver replied APPROVE", not "human approved". (b) MCP: `1a4d323` handles `-O`; "Close blockers" makes `tool_filter=[]` expose no tools (`None` means all), with a self-test. (c) Guardrails IDOR: blocks unless both ids are non-empty and equal, with self-tests for the missing, empty and mismatched cases; the deep-dive labels the book's fail-open check a defect, WEAK, at GT:L11607–L11611 |
+| G16 personal identifiers | OWNER-DECISION | Branch README email removed ("Close blockers"). Still open for the owner: Colab ids in 7 frozen notebooks, the email in PR #4's README, and both in git history |
 
 ### Owner decisions (recorded, not acted on)
 

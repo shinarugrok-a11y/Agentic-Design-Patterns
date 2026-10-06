@@ -3,7 +3,7 @@ name: prompt-chaining
 description: Sequential task decomposition. Use when each stage's output feeds the next. Not for independent sub-tasks.
 role: [executor]
 chapter: 1
-token_cost_estimate: 227
+token_cost_estimate: 248
 chains_with: [routing, tool-use]
 ---
 
@@ -27,9 +27,9 @@ chains_with: [routing, tool-use]
 - Intermediate outputs for debugging
 
 ## Failure modes
-- Step-N error propagates downstream.
-- Early context lost unless passed explicitly.
-- Free-text handoff breaks the next parser.
+- Ambiguous or free-text handoff makes the next step fail (GT:L771-L774); use JSON.
+- No check between steps lets bad output flow on.
+- Chaining a task one prompt handles adds calls and latency.
 
 ## Minimal example
 ```python

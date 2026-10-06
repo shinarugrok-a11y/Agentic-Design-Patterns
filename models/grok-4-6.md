@@ -28,7 +28,7 @@ optional: rag, memory-management, multi-agent (as a sub-agent, not coordinator)
 - Invent or revise the overall plan; escalate to the planner with the failure and evidence.
 - Judge its own output quality as final; hand it to `reflection` / `evaluation-monitoring`.
 - Load `reasoning-techniques` ToT or `exploration-discovery` loops; they burn iterations without a critic.
-- Perform irreversible actions unless the plan explicitly authorises them.
+- Take an irreversible action without a human APPROVE for that action; a plan or silence is not one.
 
 ## Loop template
 ```

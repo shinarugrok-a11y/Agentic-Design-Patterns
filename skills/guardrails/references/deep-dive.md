@@ -96,6 +96,13 @@ root_agent = Agent(model="gemini-2.0-flash-exp", name="root_agent",
 Returning a dict short-circuits the tool and the dict becomes the tool
 result the model sees.
 
+**Book defect (WEAK, fails open), GT:L11607–L11611.** `if actual and actual != expected_user_id`
+allows the call when `user_id_param` is missing or empty, and when the session has no
+`session_user_id`. An attacker-controlled call that omits the argument, or a session without an
+identity, passes. Do not copy it. Fail closed for identity-scoped tools: block unless both ids are
+non-empty strings and equal. `examples/minimal.py` does this and tests the missing, empty and
+mismatched cases (DERIVED).
+
 ## Other layers mentioned (SOURCE, GT:L11020–L11030, L11574–L11582, L11774–L11804)
 - Output filtering for toxicity or bias (book); regex/PII classifiers and schema checks are DERIVED.
 - Behavioural prompting: explicit refusal rules in the system prompt.

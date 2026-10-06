@@ -92,6 +92,7 @@ def write_manifest(manifest):
 
 
 INDEX_PATH = "skills/INDEX.md"
+ID_RE = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 GT_INDEX_PATH = "ground-truth/INDEX.md"
 MIRROR_DIR = ".agents/skills"
 
@@ -143,7 +144,14 @@ def mirror_target(i):
 
 def sync(manifest):
     """Refresh token_cost_estimate (SKILL.md + manifest), notebook companions, the
-    generated indexes and the .agents/skills mirror symlinks."""
+    generated indexes and the .agents/skills mirror symlinks.
+
+    Ids and chapters become file paths, so they are validated before anything is written."""
+    bad = [repr(s.get("id")) for s in manifest["skills"]
+           if not (isinstance(s.get("id"), str) and ID_RE.fullmatch(s["id"])
+                   and type(s.get("chapter")) is int and 1 <= s["chapter"] <= 99)]
+    if bad:
+        sys.exit(f"sync refused: unsafe manifest id/chapter {', '.join(bad)}; nothing written")
     for s in manifest["skills"]:
         p = os.path.join(ROOT, f"skills/{s['id']}/SKILL.md")
         text = read(f"skills/{s['id']}/SKILL.md")
@@ -179,7 +187,7 @@ skills = manifest["skills"]
 ids = [s["id"] for s in skills]
 check("manifest has 21 skills", len(skills) == 21, str(len(skills)))
 check("manifest ids unique + kebab-case",
-      len(set(ids)) == len(ids) and all(re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", i) for i in ids))
+      len(set(ids)) == len(ids) and all(isinstance(i, str) and ID_RE.fullmatch(i) for i in ids))
 check("manifest chapters are exactly 1..21", sorted(s["chapter"] for s in skills) == list(range(1, 22)))
 required = {"id", "name", "chapter", "role", "when_to_use", "when_not_to_use", "inputs", "outputs",
             "failure_modes", "chains_with", "token_cost_estimate", "kind", "signals"}

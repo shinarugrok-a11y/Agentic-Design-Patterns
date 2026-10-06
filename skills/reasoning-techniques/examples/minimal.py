@@ -3,9 +3,35 @@ bounded number of steps, plus a labelled CoT trace separated from the answer.
 
 Offline stub: `think` is a scripted stand-in for the model.
 """
+import ast
+import operator
+
+OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+       ast.Div: operator.truediv, ast.USub: operator.neg}
+
+
+def calc(expr: str) -> str:
+    """Arithmetic only (+ - * / and unary minus on numbers). Never eval model output."""
+    if not isinstance(expr, str) or len(expr) > 100:
+        return "calc error: expression must be text of at most 100 characters"
+
+    def ev(node):
+        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+            return node.value
+        if isinstance(node, ast.BinOp) and type(node.op) in OPS:
+            return OPS[type(node.op)](ev(node.left), ev(node.right))
+        if isinstance(node, ast.UnaryOp) and type(node.op) in OPS:
+            return OPS[type(node.op)](ev(node.operand))
+        raise ValueError
+    try:
+        return str(ev(ast.parse(expr, mode="eval").body))
+    except (SyntaxError, ValueError, ZeroDivisionError):
+        return "calc error: unsupported expression"
+
+
 TOOLS = {
     "search": lambda q: {"population of earth": "about 8 billion"}.get(q.lower(), "no result"),
-    "calc": lambda expr: str(eval(expr, {"__builtins__": {}})),
+    "calc": calc,
 }
 MAX_STEPS = 5
 
@@ -37,3 +63,6 @@ if __name__ == "__main__":
     print("\n".join(trace))
     print("=== final answer ===")
     print(answer)
+    for bad in ("__import__('os').system('true')", "(1).__class__", "2**10**10"):
+        if not calc(bad).startswith("calc error"):
+            raise SystemExit(f"calc accepted {bad!r}")
