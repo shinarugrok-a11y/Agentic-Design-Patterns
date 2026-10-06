@@ -96,7 +96,7 @@ tried) into state *before* escalation so the hand-off carries it.
 Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 Escalate to a human when ANY holds:
-- action is irreversible (payment, deletion, external send) and not pre-approved
+- action is irreversible (payment, deletion, external send): always, each time; no standing pre-approval
 - confidence < {threshold} or the request is ambiguous after one clarification
 - user expresses distress, legal threat, or requests a human
 - policy/regulatory domain: {list}
@@ -121,7 +121,7 @@ evaluation data (`evaluation-monitoring`) or used to adapt policies
 ## Pattern variants (SOURCE terms; glosses DERIVED)
 - **Escalation gate** — the agent calls an escalation tool when a case exceeds its competence. The book's version is a stub; a real one returns pending and waits.
 - **Decision augmentation** — agent analyses and recommends, human makes the call.
-- **Human-on-the-loop** — human sets policy up front, agent executes autonomously inside it (GT:L7945).
+- **Human-on-the-loop** — human sets policy up front, agent executes autonomously inside it (GT:L7945). In this repo it never covers irreversible actions; those keep a per-action APPROVE.
 - **Intervention and correction** — human patches a stuck or wrong run mid-flight.
 - **Feedback for learning** — approvals, edits and labels are logged as training signal.
 

@@ -17,6 +17,12 @@ across multi-step reasoning. Also called the Pipeline pattern (GT:L698).
 - Error propagation: an early mistake compounds.
 - Hallucination risk rises with cognitive load.
 
+These are the book's reasons to chain, not risks of chaining. The chain-specific
+risk the book names (SOURCE, GT:L771–L774) is the handoff: "If the output of one
+prompt is ambiguous or poorly formatted, the subsequent prompt may fail due to
+faulty input", mitigated by a structured format such as JSON or XML. Checking
+each step's output and not chaining one-shot tasks are DERIVED.
+
 ## Core pattern: LCEL two-stage chain
 Provenance: SOURCE (abridged) — condensed from GT:L1000–L1036; not verbatim.
 ```python

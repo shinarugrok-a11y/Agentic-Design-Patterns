@@ -46,7 +46,8 @@ def delete_everything() -> str:
 
 class MCPToolset:
     def __init__(self, server: ToyMCPServer, tool_filter: list[str] | None = None):
-        self.tools = [t for t in server.list_tools() if not tool_filter or t["name"] in tool_filter]
+        # None = expose every tool; [] = expose none. Never treat an empty filter as "all".
+        self.tools = [t for t in server.list_tools() if tool_filter is None or t["name"] in tool_filter]
         self._server = server
 
     def call(self, tool_name: str, **args):
@@ -65,3 +66,6 @@ if __name__ == "__main__":
         print("blocked:", e)
     else:
         raise SystemExit("tool_filter failed: delete_everything ran")
+    if MCPToolset(server, tool_filter=[]).tools:
+        raise SystemExit("tool_filter=[] exposed tools")
+    print("tool_filter=[] exposes: []")

@@ -27,7 +27,7 @@ pick one: tool-use (act), rag (answer from the user's documents), prioritization
 - Degrade gracefully: if a tool fails twice, tell the user and stop (`exception-handling`).
 
 ## Should not
-- Run irreversible actions on a timeout or silence; no answer means no.
+- Take an irreversible action without a human APPROVE for that action; a plan or silence is not one.
 - Chain more than 2-3 tool calls without checking in.
 - Load planning, multi-agent, a2a or exploration skills; delegate such work to Fable 5.1.
 - Store or forward personal data beyond what the current task needs.
