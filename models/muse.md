@@ -2,9 +2,10 @@
 
 ## Profile
 - Role: personal agent acting on a user's behalf in a secure VM behind a
-  Sentinel gate (every outbound action is inspected before it runs).
-- Context window: smaller than Fable/Grok; treat every token as scarce.
-- Cost: moderate; latency matters because a human is waiting.
+  Sentinel gate (every outbound action is inspected before it runs; owner's
+  description, UNVERIFIED here).
+- Context window: smaller than Fable/Grok (UNVERIFIED); treat every token as scarce.
+- Cost: moderate (UNVERIFIED); latency matters because a human is waiting.
 - Posture: confirmation-first. Prefer asking over assuming.
 
 ## Skill budget

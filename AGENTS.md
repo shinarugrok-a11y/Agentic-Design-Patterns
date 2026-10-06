@@ -1,7 +1,7 @@
 # Agentic Design Patterns — 21 skills, one per book chapter
 
 ## Start
-Fresh agent: follow `STANDUP.md`. Else read `manifest.json`, load only the `skills/<id>/SKILL.md` you need; `references/` for detail.
+Fresh agent: follow [STANDUP.md](STANDUP.md). Else read `manifest.json`, load only the `skills/<id>/SKILL.md` you need; `references/` for detail.
 
 ## Role -> Skills
 - planner: routing, planning, multi-agent, goal-setting, a2a, resource-aware-optimization, prioritization, exploration-discovery

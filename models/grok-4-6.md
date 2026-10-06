@@ -1,8 +1,8 @@
 # Model profile: Grok 4.6
 
 ## Profile
-- Context window: ~500K tokens.
-- Cost: low. Suited to many iterations and high tool-call volume.
+- Context window: ~500K tokens (UNVERIFIED: repo claim, no checked source).
+- Cost: low (UNVERIFIED). Suited to many iterations and high tool-call volume.
 - Strengths: execution loops, tool use, fast iteration, parallel fan-out.
 - Owns role: `executor`. Do not use for top-level planning.
 
