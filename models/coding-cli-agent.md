@@ -34,6 +34,14 @@ by task: tool-use, prompt-chaining, mcp, reflection, evaluation-monitoring
 - Modify `Agentic_Design_Patterns_Complete.pdf` or `chapter_notebooks/*.ipynb`.
 - Retry a failing command more than twice without changing something.
 
+## Codex hand-off (checked against openai/codex rust-v0.154.0 source)
+- Codex reads `AGENTS.md` itself. To hand it a task, write a packet file (goal,
+  skill ids, checks) and run `codex exec --json - < packet.md`: `-` reads the
+  prompt from stdin and `--json` prints events as JSONL.
+- Never wire Codex as an MCP server: `codex mcp-server` was removed in
+  rust-v0.154.0 ([openai/codex#42993](https://github.com/openai/codex/pull/42993)).
+- Keep Codex's approval and sandbox settings; never pass flags that bypass them.
+
 ## Task note format
 ```
 runtime: <name>   profile: models/coding-cli-agent.md

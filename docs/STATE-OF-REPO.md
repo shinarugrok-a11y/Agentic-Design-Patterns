@@ -44,7 +44,7 @@ Status as of the latest commit on this branch; a commit named only by subject is
 | P6 validator honesty + PASS/FAIL fixtures | see G13 | — |
 | P7 identity/profile + memory-seed templates | CLOSED | `templates/profile.md`, `templates/memory-seed.md`, placeholders only |
 | One ship-security checklist + teacher review | CLOSED | `skills/ship-security-checklist` (review rubric folded in); manifest gains `kind`, validator accepts `chapter: null` for operational skills only |
-| Codex as MCP server | Not used | see `models/coding-cli-agent.md` |
+| Codex as MCP server (wrong route) | CLOSED | "Codex hand-off": `models/coding-cli-agent.md` documents `AGENTS.md` plus `codex exec --json - < packet.md`, and says never to use `codex mcp-server`. Checked against the openai/codex `rust-v0.154.0` source: `codex-rs/exec/src/cli.rs` has `--json` ("Print events to stdout as JSONL") and reads the prompt from stdin with `-`. PR #42993 ("Remove the deprecated `codex mcp-server` command") was merged 2026-09-05, and release rust-v0.154.0 (published 2026-09-09) notes say the entry point "is no longer available" |
 
 ### Owner decisions (recorded, not acted on)
 
