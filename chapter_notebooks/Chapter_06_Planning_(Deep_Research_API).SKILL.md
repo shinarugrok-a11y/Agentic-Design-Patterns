@@ -3,7 +3,7 @@ name: planning
 description: Decompose a goal into ordered steps before acting. Use for multi-step goals with unclear path. Not for single actions.
 role: [planner]
 chapter: 6
-token_cost_estimate: 218
+token_cost_estimate: 217
 chains_with: [goal-setting, multi-agent]
 ---
 
@@ -33,10 +33,10 @@ chains_with: [goal-setting, multi-agent]
 
 ## Minimal example
 ```python
-plan  = Task(description=f"Numbered step plan for: {goal}", agent=planner)
-write = Task(description="Execute the plan", agent=writer, context=[plan])
-Crew(agents=[planner, writer], tasks=[plan, write],
-     process=Process.sequential).kickoff()
+steps = json.loads(llm(f"JSON list of steps for: {goal}"))   # plan first
+for step in steps:
+    out = executor(step, context=steps)                       # then execute in order
+    if not ok(out): break                                     # re-plan; don't plough on
 ```
 
 ## Next skills

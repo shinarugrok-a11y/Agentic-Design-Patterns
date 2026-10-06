@@ -3,7 +3,7 @@ name: tool-use
 description: Function calling. Use for live data, computation or actions. Not when model knowledge suffices.
 role: [executor]
 chapter: 5
-token_cost_estimate: 225
+token_cost_estimate: 241
 chains_with: [mcp, exception-handling]
 ---
 
@@ -33,11 +33,11 @@ chains_with: [mcp, exception-handling]
 
 ## Minimal example
 ```python
-@tool
 def get_stock_price(ticker: str) -> float:
     """Latest price for ticker. Raises ValueError if unknown."""
-agent = create_tool_calling_agent(llm, [get_stock_price], prompt)
-AgentExecutor(agent=agent, tools=[get_stock_price]).invoke(q)
+TOOLS = {"get_stock_price": get_stock_price}
+call = llm_pick_tool(question, schemas(TOOLS))   # model picks name + args
+result = TOOLS[call.name](**call.args)           # your code runs it
 ```
 
 ## Next skills

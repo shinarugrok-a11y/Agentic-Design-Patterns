@@ -3,7 +3,7 @@ name: multi-agent
 description: Specialist agents plus a coordination model. Use when roles differ. Not when one agent suffices.
 role: [planner, executor]
 chapter: 7
-token_cost_estimate: 224
+token_cost_estimate: 217
 chains_with: [a2a, routing]
 ---
 
@@ -32,10 +32,10 @@ chains_with: [a2a, routing]
 
 ## Minimal example
 ```python
-r1 = LlmAgent(name="r1", output_key="r1", instruction="Research X")
-r2 = LlmAgent(name="r2", output_key="r2", instruction="Research Y")
-merge = LlmAgent(name="merge", instruction="Combine {r1} {r2}")
-root = SequentialAgent(sub_agents=[ParallelAgent(sub_agents=[r1, r2]), merge])
+r1 = agent("Research X", output_key="r1")      # specialists, one job each
+r2 = agent("Research Y", output_key="r2")
+state = run_parallel([r1, r2])                 # independent, so concurrent
+final = agent("Combine {r1} and {r2}").run(state)   # coordinator merges
 ```
 
 ## Next skills

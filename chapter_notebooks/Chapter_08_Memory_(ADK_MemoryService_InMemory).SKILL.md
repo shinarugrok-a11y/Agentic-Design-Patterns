@@ -3,7 +3,7 @@ name: memory-management
 description: Session state plus searchable long-term memory. Use for multi-turn or cross-session context. Not for stateless requests.
 role: [memory]
 chapter: 8
-token_cost_estimate: 215
+token_cost_estimate: 210
 chains_with: [rag, learning-adaptation]
 ---
 
@@ -33,10 +33,10 @@ chains_with: [rag, learning-adaptation]
 
 ## Minimal example
 ```python
-agent = LlmAgent(name="greeter", output_key="last_greeting")
-runner = Runner(agent=agent, session_service=InMemorySessionService(),
-                memory_service=InMemoryMemoryService())
-# later turn: tool_context.state["user:pref"] = "dark"; memory.search("pref")
+state["temp:draft"] = draft          # this turn only
+state["user:theme"] = "dark"         # this user, every session
+memory.add(session)                  # long-term store
+hits = memory.search("theme preference")   # recall later by meaning
 ```
 
 ## Next skills

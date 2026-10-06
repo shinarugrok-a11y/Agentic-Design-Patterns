@@ -3,7 +3,7 @@ name: parallelization
 description: Concurrent independent sub-tasks. Use for fan-out then one merge. Not when steps depend on each other.
 role: [executor]
 chapter: 3
-token_cost_estimate: 210
+token_cost_estimate: 239
 chains_with: [multi-agent, prompt-chaining]
 ---
 
@@ -33,9 +33,9 @@ chains_with: [multi-agent, prompt-chaining]
 
 ## Minimal example
 ```python
-branches = RunnableParallel(summary=sum_chain, questions=q_chain,
-                            topic=RunnablePassthrough())
-result = (branches | synth_prompt | llm).invoke(topic)
+summary, questions = await asyncio.gather(
+    llm(f"Summarise: {topic}"), llm(f"Three questions about: {topic}"))
+result = await llm(f"Synthesise. Summary: {summary}\nQuestions: {questions}\nTopic: {topic}")
 ```
 
 ## Next skills
