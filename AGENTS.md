@@ -1,22 +1,18 @@
-# Agentic Design Patterns — Agent Guide
+# Agentic Design Patterns — 21 skills, one per book chapter
 
-A skill library derived from "Agentic Design Patterns" (21 chapters).
-Each chapter -> one self-contained skill in `skills/`.
-
-## Navigate
-1. Read `manifest.json` for the skill index.
-2. Pick the skills that match your role.
-3. Load `skills/<id>/SKILL.md`. Load `references/` only if you need detail.
+## Start
+Fresh agent: follow `STANDUP.md`. Else read `manifest.json`, load only the `skills/<id>/SKILL.md` you need; `references/` for detail.
 
 ## Role -> Skills
-- planner:  routing, planning, multi-agent, goal-setting, a2a, resource-aware-optimization, prioritization, exploration-discovery
+- planner: routing, planning, multi-agent, goal-setting, a2a, resource-aware-optimization, prioritization, exploration-discovery
 - executor: prompt-chaining, routing, parallelization, tool-use, multi-agent, mcp, a2a
-- critic:   reflection, learning-adaptation, reasoning-techniques, evaluation-monitoring, exploration-discovery
-- memory:   memory-management, learning-adaptation, mcp, rag
-- safety:   exception-handling, human-in-the-loop, guardrails
+- critic: reflection, learning-adaptation, reasoning-techniques, evaluation-monitoring, exploration-discovery
+- memory: memory-management, learning-adaptation, mcp, rag
+- safety: exception-handling, human-in-the-loop, guardrails
 
 ## Rules
-- Do not load the entire PDF during normal execution. Use the compact skills first; consult canonical PDF-derived source slices whenever fidelity, ambiguity, provenance, or missing detail requires it. PDF is mostly for Human use
+- Do not load the entire PDF during normal execution. Use skills first; consult canonical PDF-derived slices (`ground-truth/`) when fidelity, ambiguity, provenance or missing detail requires it. PDF is for humans.
 - Do not load all skills at once. Lazy-load only.
-- Update `manifest.json` when adding a skill (check: `python3 tools/validate.py`).
-- See `models/` for per-model guidance (Fable 5.1, Grok 4.6, Muse).
+- Labels: SOURCE = book; DERIVED = ours (all SKILL.md/patterns.md code); EXTERNAL-UNVERIFIED/UNCERTAIN = unchecked.
+- Never skip auth, confirmation or guardrails.
+- New skill: update `manifest.json`, run `python3 tools/validate.py`. Runtimes: `models/`.

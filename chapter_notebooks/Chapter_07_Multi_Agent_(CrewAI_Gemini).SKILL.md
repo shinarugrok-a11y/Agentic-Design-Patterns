@@ -3,7 +3,7 @@ name: multi-agent
 description: Specialist agents plus a coordination model. Use when roles differ. Not when one agent suffices.
 role: [planner, executor]
 chapter: 7
-token_cost_estimate: 234
+token_cost_estimate: 224
 chains_with: [a2a, routing]
 ---
 
@@ -11,7 +11,6 @@ chains_with: [a2a, routing]
 
 ## When to use
 - Distinct roles (researcher, writer, reviewer).
-- Work is sequential, parallel or loop-shaped.
 - Specialists need different tools.
 
 ## When NOT to use
