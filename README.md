@@ -1,5 +1,7 @@
 # Agentic Design Patterns
 
+**AI agents: start at [AGENTS.md](AGENTS.md)** (raw: `https://raw.githubusercontent.com/shinarugrok-a11y/Agentic-Design-Patterns/main/AGENTS.md`). It is the single entry point; read nothing else first.
+
 Repository for the book **Agentic Design Patterns: A Hands-On Guide to Building Intelligent Systems** by Antonio Gulli, plus a derived agent skill library and an evidence audit of what this tree actually contains.
 
 This checkout is [shinarugrok-a11y/Agentic-Design-Patterns](https://github.com/shinarugrok-a11y/Agentic-Design-Patterns). Git history through `e11e6fb` (2026-07-24, "Merge pull request #2 from 1040942669/fix-readme-typo") is the tip of [evoiz/Agentic-Design-Patterns](https://github.com/evoiz/Agentic-Design-Patterns). Later commits on this repository add the skill library, model profiles, and the pdftotext extract.
@@ -12,7 +14,7 @@ The book text states: "All my royalties are donated to Save the Children." That 
 | --- | --- | --- |
 | Book PDF | `Agentic_Design_Patterns_Complete.pdf` | Present. Poppler `pdfinfo` reports **458 pages**, letter size, producer PyPDF2, not encrypted. |
 | Text extract | `ground-truth/agentic_design_patterns.txt` | Present. A fresh `pdftotext -layout` (Poppler 24.02.0) matches 17,642 of 17,659 lines. The 17 differing lines are emoji wrap in four clusters. |
-| Skill library | `skills/`, `manifest.json`, `AGENTS.md`, `STANDUP.md`, `models/` | `python3 tools/validate.py` passes, including the 3,000-token simulation (worst pair 2,996) and the stand-up fixtures. All 21 `examples/minimal.py` files exit 0 offline. Re-audit log: `validation/skill-reaudit/LOG.md`. |
+| Skill library | `AGENTS.md`, `skills/`, `skills/INDEX.md`, `manifest.json`, `models/` | `python3 tools/validate.py` passes, including the 3,000-token simulation (worst pair 2,498, measured on `AGENTS.md` + `skills/INDEX.md`) and the stand-up fixtures (worst case 3,000 of 4,000). All 21 `examples/minimal.py` files exit 0 offline. Re-audit log: `validation/skill-reaudit/LOG.md`. |
 | Chapter notebooks | `chapter_notebooks/` | 65 notebooks. Illustrative snippets and fragments. Seven appendix files are Google Drive placeholders. Dependencies are not pinned. |
 | Audit | `validation/audit/` | This evidence pass (2026-09-23). Independent of any Claude or Anthropic extraction. |
 
@@ -23,13 +25,16 @@ Verified here means a file, command, or test in this repository was inspected or
 ```
 .
 ├── README.md
-├── AGENTS.md                  # how an agent should load the skill library
-├── STANDUP.md                 # step-by-step stand-up path + routing table for a fresh agent
-├── manifest.json              # index of the 21 skills
+├── AGENTS.md                  # single agent entry point: boot steps, profile table, role table
+├── GEMINI.md                  # one-line pointer to AGENTS.md for Gemini CLI
+├── manifest.json              # full record of the 21 skills (for tools)
+├── .agents/skills/<id>        # symlinks to skills/<id> for Codex skill discovery
 ├── Agentic_Design_Patterns_Complete.pdf   # book PDF (458 pages)
 ├── ground-truth/
 │   ├── README.md              # how the text extract was produced
+│   ├── INDEX.md               # generated chapter/appendix line ranges
 │   └── agentic_design_patterns.txt
+├── skills/INDEX.md            # generated slim index + routing signals; agents read this, not manifest.json
 ├── skills/<id>/
 │   ├── SKILL.md               # compact pattern card
 │   ├── references/patterns.md
@@ -38,7 +43,7 @@ Verified here means a file, command, or test in this repository was inspected or
 ├── models/                    # runtime profiles (Fable 5.1, Grok 4.6, Muse, coding CLI, desktop assistant)
 ├── chapter_notebooks/         # book-related notebooks and generated .SKILL.md copies
 ├── tools/validate.py          # skill-library checks; requires tiktoken
-├── tools/standup_sim.py       # simulates STANDUP.md on tests/fixtures/standup_tasks.json
+├── tools/standup_sim.py       # deterministic routing-table test of the boot path on tests/fixtures/standup_tasks.json
 ├── tools/provenance_scan.py   # where each skill code line comes from (book, notebook, none)
 ├── tests/fixtures/            # stand-up task fixtures
 └── validation/                # audit/ evidence pass; skill-reaudit/ per-skill fixes
@@ -54,7 +59,7 @@ Open `Agentic_Design_Patterns_Complete.pdf`, or search `ground-truth/agentic_des
 
 ### Use the skill library
 
-A fresh agent follows [STANDUP.md](STANDUP.md): identify the runtime, load one `models/` profile, read `manifest.json`, then load at most three `skills/<id>/SKILL.md` chosen by the routing table. `AGENTS.md` is the short router.
+A fresh agent follows the boot steps in [AGENTS.md](AGENTS.md): name the runtime, load one `models/` profile, read the generated `skills/INDEX.md`, then load at most three `skills/<id>/SKILL.md` chosen by its pick rule. `manifest.json` is the full record for tools. `STANDUP.md` was folded into `AGENTS.md`. Whether Cursor or Grok load `AGENTS.md` automatically is UNVERIFIED.
 
 Check the library:
 
@@ -63,9 +68,9 @@ python3 -m pip install tiktoken
 python3 tools/validate.py
 ```
 
-On 2026-09-23 that command failed the two 3,000-token simulation checks (3,006 and 3,014). Card trims on this branch fixed them without raising the budget; see `validation/skill-reaudit/LOG.md`. `python3 tools/standup_sim.py` runs only the stand-up fixtures. `tiktoken` is the validator's dependency. It is not declared in a requirements file because this repository has no `requirements.txt`.
+On 2026-09-23 that command failed the two 3,000-token simulation checks (3,006 and 3,014). Card trims on this branch fixed them without raising the budget; see `validation/skill-reaudit/LOG.md`. `python3 tools/standup_sim.py` runs only the stand-up fixtures. It is a deterministic test of the routing tables, not of real agent behaviour. `tiktoken` is the validator's dependency. It is not declared in a requirements file because this repository has no `requirements.txt`.
 
-`python3 tools/validate.py --sync` rewrites `token_cost_estimate` values and the `chapter_notebooks/Chapter_*.SKILL.md` copies. Run it only when you intend to regenerate those files.
+`python3 tools/validate.py --sync` rewrites `token_cost_estimate` values, the `chapter_notebooks/Chapter_*.SKILL.md` copies, `skills/INDEX.md`, `ground-truth/INDEX.md` and the `.agents/skills` symlinks. Run it only when you intend to regenerate those files.
 
 ### Notebooks
 
@@ -88,7 +93,7 @@ GitHub Issues and Discussions are disabled on this repository (`has_issues: fals
 ## Provenance
 
 - **Authoritative book text.** `Agentic_Design_Patterns_Complete.pdf` and the pdftotext extract under `ground-truth/`. The acknowledgment names Antonio Gulli as the author, thanks Springer, and credits Marco Fago (code, diagrams, review) and Mahtab Syed (coding), among others.
-- **Derived skill library.** `skills/`, `manifest.json`, `AGENTS.md`, and `models/` compress each chapter into an agent-loadable card and an offline stub. They are derived notes, not a second copy of the book.
+- **Derived skill library.** `skills/`, `manifest.json`, `AGENTS.md`, the generated indexes, and `models/` compress each chapter into an agent-loadable card and an offline stub. They are derived notes, not a second copy of the book.
 - **Notebook mirror.** `chapter_notebooks/*.ipynb` arrived with the original repository commits by Elias Albittar / Elias Al-bittar (`evoiz963@gmail.com`). Some cells carry `Copyright (c) 2025 Marco Fago` and point at a `LICENSE` file that is not in the tree. The book text itself also contains those copyright headers inside code listings.
 - **Generated duplicates.** `chapter_notebooks/Chapter_*.SKILL.md` copies of `skills/<id>/SKILL.md`, maintained by `tools/validate.py`.
 - **Audit record.** `validation/audit/` is the 2026-09-23 evidence pass: what was checked, what was corrected, and what is still uncertain.

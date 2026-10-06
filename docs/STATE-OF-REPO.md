@@ -11,17 +11,17 @@ This section is kept current. Everything under it, from "Read-only review" to th
 
 Later commits on this branch correct those routes. They are listed per gap below.
 
-Status as of `1a4d323`. "Branch" means fixed here, not on `main`; `main` changes only when the owner lands a PR.
+Status as of the latest commit on this branch; a commit named only by subject is the one that introduced the change. "Branch" means fixed here, not on `main`; `main` changes only when the owner lands a PR.
 
 | Gap | Status | By / note |
 | --- | --- | --- |
-| G1 README sends bots the wrong way | OPEN | Branch README is accurate (audit README folded in by `0853b67`), but it has no first-screen "AI agents start at AGENTS.md" line |
+| G1 README sends bots the wrong way | CLOSED (branch) | `0853b67` folded in the accurate README (no `book/` path, 458 pages). "Route correction" commit adds a first-screen "AI agents: start at AGENTS.md" line with the raw URL, which the validator checks |
 | G2 main fails its validator | CLOSED (branch) | `0853b67` brought the keyword fix; `e5cafb9` brought the budget fix. `main` itself is unchanged until a PR lands |
-| G3 runtime discovery | OPEN | — |
-| G4 runtime / "who am I" step | OPEN (partial) | `ba2b11d` added a runtime step and two runtime profiles, but in `STANDUP.md`, which no runtime auto-loads |
+| G3 runtime discovery | CLOSED (required scope) | "Route correction": `AGENTS.md` is the single entry (Codex and Claude Code read it natively; no `CLAUDE.md`, validator-enforced). `GEMINI.md` is a one-line pointer. `.agents/skills/<id>` symlinks for Codex skill scanning are generated and checked by the validator. Still OPEN: a `.claude/skills` mirror (Claude Code symlink handling not verified). UNVERIFIED: whether Cursor or Grok load `AGENTS.md` |
+| G4 runtime / "who am I" step | CLOSED (branch) | `ba2b11d` added the runtime profiles. "Route correction" moves the runtime step and profile table into `AGENTS.md` boot steps 1–2, each with a Done: check, and deletes `STANDUP.md` |
 | G5 provenance markers | CLOSED | `98674bc` added Provenance labels and GT:L citations in every deep-dive (`validation/skill-reaudit/LOG.md`); `8a14d56` makes the validator enforce a Provenance line per deep-dive code block |
-| G6 slim index / gate measures wrong path | OPEN | `e5cafb9` passed the gate by trimming (worst 2996/3000), the route the review warns against |
-| G7 source slices do not exist | OPEN | — |
+| G6 slim index / gate measures wrong path | CLOSED (branch) | "Route correction" generates `skills/INDEX.md` (816 tokens) from `manifest.json`, and the validator checks it matches. The Step-7 gate now measures `AGENTS.md` + `skills/INDEX.md`: worst pair 2498/3000 (headroom 502; was 2996). Stand-up worst case is 3000/4000. The gate stays 3000. `deep-dive.md` remains on-demand and outside the gate |
+| G7 source slices do not exist | CLOSED (branch) | "Route correction" generates `ground-truth/INDEX.md`: line ranges for chapters 1–21, appendices A–G, Glossary and Index of Terms. The validator checks it matches the text, and `AGENTS.md` step 5 points to it. Ranges spot-checked against the text (for example Ch 1 starts at GT:L696, Appendix A at 13596) |
 | G8 appendices have no skills | OPEN | — |
 | G9 duplicate notebook companions | OWNER-DECISION | — |
 | G10 open security / review findings | OPEN | `eval` example, IDOR, validator path traversal, `ground-truth/README` output path |

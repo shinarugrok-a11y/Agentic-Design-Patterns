@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Simulate a fresh agent following STANDUP.md on the fixture tasks.
+"""Deterministic routing-table test of the documented boot path.
 
-Routing and profile choice are parsed from the tables in STANDUP.md; the
-fixtures only hold the task text and the expectations. For each task this
-records the files loaded and their cl100k token counts, then asserts the
-expected profile, expected/forbidden skills and the stand-up budget. A task
-with "must_trigger_hitl" also runs the human-in-the-loop example gate on a
-send_email action and asserts it never executes without APPROVE.
+This is NOT a behavioural test of a real agent: no model runs. It applies the
+profile table in AGENTS.md and the pick rule + routing table in skills/INDEX.md
+exactly as written, to the tasks in tests/fixtures/standup_tasks.json, so a
+broken table, a missing profile or a budget overrun fails. For each task it
+records the files a rule-following agent would load and their cl100k token
+counts, then asserts the expected profile, expected/forbidden skills and the
+stand-up budget. A task with "must_trigger_hitl" also runs the
+human-in-the-loop example gate on a send_email action and asserts it never
+executes without APPROVE. Whether a real bot follows these rules is untested.
 
 Usage: python3 tools/standup_sim.py [--json]
 Exit code 0 when every fixture passes. Needs stdlib + tiktoken.
@@ -20,7 +23,9 @@ import sys
 import tiktoken
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STANDUP = os.path.join(ROOT, "STANDUP.md")
+AGENTS = os.path.join(ROOT, "AGENTS.md")
+INDEX = os.path.join(ROOT, "skills", "INDEX.md")
+BOOT_FILES = ["AGENTS.md", "skills/INDEX.md"]
 FIXTURES = os.path.join(ROOT, "tests", "fixtures", "standup_tasks.json")
 MAX_SKILLS = 3
 SUFFIX = r"(?:s|es|d|ed|ing)?"
@@ -44,21 +49,24 @@ def table(text, header):
                     break
                 rows.append([c.strip() for c in row.strip().strip("|").split("|")])
             return rows
-    raise ValueError(f"STANDUP.md: table {header} not found")
+    raise ValueError(f"table {header} not found")
 
 
-def parse_standup(path=STANDUP):
-    with open(path, encoding="utf-8") as f:
+def parse_standup(agents=AGENTS, index=INDEX):
+    with open(agents, encoding="utf-8") as f:
         text = f.read()
     m = re.search(r"Stand-up budget: (\d+) tokens", text)
     if not m:
-        raise ValueError("STANDUP.md: 'Stand-up budget: N tokens' line not found")
+        raise ValueError("AGENTS.md: 'Stand-up budget: N tokens' line not found")
     profiles = [([s.strip().lower() for s in sig.split(",")], prof)
                 for sig, prof in table(text, ["runtime signal", "profile"])]
+    with open(index, encoding="utf-8") as f:
+        idx = f.read()
     routes = [{"id": sid, "role": [r.strip() for r in role.split(",")],
                "signals": [s.strip().lower() for s in sig.split(",") if s.strip()]}
-              for sid, role, sig in table(text, ["skill id", "role", "task signals"])]
-    return {"budget": int(m.group(1)), "profiles": profiles, "routes": routes}
+              for sid, role, _use, sig in table(idx, ["id", "role", "use when", "signals"])]
+    gates = re.findall(r"\[(templates/[a-z-]+\.md)\]", text)
+    return {"budget": int(m.group(1)), "profiles": profiles, "routes": routes, "always": gates}
 
 
 def pick_profile(runtime, profiles):
@@ -69,7 +77,7 @@ def pick_profile(runtime, profiles):
     for signals, prof in profiles:
         if "*" in signals:
             return prof
-    raise ValueError("STANDUP.md: no fallback (*) profile row")
+    raise ValueError("AGENTS.md: no fallback (*) profile row")
 
 
 def matches(task, signal):
@@ -119,8 +127,7 @@ def simulate(fixtures_path=FIXTURES):
     for t in tasks:
         profile = pick_profile(t["runtime"], std["profiles"])
         skills = route(t["task"], std["routes"])
-        files = ["AGENTS.md", "STANDUP.md", profile, "manifest.json"] + \
-                [f"skills/{s}/SKILL.md" for s in skills]
+        files = BOOT_FILES + std["always"] + [profile] + [f"skills/{s}/SKILL.md" for s in skills]
         per_file = {f: tokens(f) for f in files}
         total = sum(per_file.values())
         fails = []

@@ -1,5 +1,5 @@
 {
-  "description": "Stand-up path fixtures. tools/standup_sim.py routes each task with the tables parsed from STANDUP.md (nothing here is used for routing) and checks the result against these expectations.",
+  "description": "Stand-up path fixtures. tools/standup_sim.py routes each task with the profile table parsed from AGENTS.md and the routing table parsed from skills/INDEX.md (nothing here is used for routing) and checks the result against these expectations.",
   "tasks": [
     {
       "id": "research-workflow",
