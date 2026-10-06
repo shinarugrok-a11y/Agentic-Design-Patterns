@@ -1,8 +1,8 @@
 # Model profile: Fable 5.1
 
 ## Profile
-- Context window: ~1M tokens.
-- Cost: high per token. Spend it on thinking, not on re-reading.
+- Context window: ~1M tokens (UNVERIFIED: repo claim, no checked source).
+- Cost: high per token (UNVERIFIED). Spend it on thinking, not on re-reading.
 - Strengths: long-horizon planning, multi-hour agentic sessions, critique.
 - Owns roles: `planner`, `critic`.
 
