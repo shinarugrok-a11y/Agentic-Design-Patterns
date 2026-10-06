@@ -81,6 +81,20 @@ fragment in the RAO critic prompt (GT:L14927), not a misattribution. Seven
 appendix notebooks are Google Drive placeholders (see
 `chapter_notebooks/README.md`). Their content was not checked against Drive.
 
+## Follow-up fixes (cursor/agent-standup-path-eada, after the review)
+
+- prompt-chaining: the card listed error propagation and lost context as chaining
+  risks. The book gives them as limits of a single prompt (GT:L736–L740). The
+  card now cites the chain risk the book does name, an ambiguous handoff
+  (GT:L771–L774).
+- guardrails: the book's IDOR check (GT:L11607–L11611) fails open on a missing
+  or empty id; the example now fails closed, and the deep-dive marks the defect.
+- Ten framework-bound cards (exception-handling, guardrails, mcp,
+  memory-management, multi-agent, parallelization, planning, prompt-chaining,
+  rag, tool-use) now show framework-neutral pseudo-code. The framework forms
+  were already in each `references/patterns.md` with "(book)" labels, so no
+  detail moved. Card code stays DERIVED.
+
 ## Still unverified
 
 - Notebook-only code that is not in GT. Examples: the MCP FastMCP variant, and

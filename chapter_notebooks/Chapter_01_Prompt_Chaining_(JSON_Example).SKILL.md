@@ -3,7 +3,7 @@ name: prompt-chaining
 description: Sequential task decomposition. Use when each stage's output feeds the next. Not for independent sub-tasks.
 role: [executor]
 chapter: 1
-token_cost_estimate: 248
+token_cost_estimate: 246
 chains_with: [routing, tool-use]
 ---
 
@@ -33,9 +33,9 @@ chains_with: [routing, tool-use]
 
 ## Minimal example
 ```python
-extract = prompt("Extract specs: {text}") | llm | str
-to_json = prompt("Specs -> JSON {cpu,memory,storage}: {specs}") | llm | str
-result = ({"specs": extract} | to_json).invoke({"text": raw})
+specs = llm(f"Extract specs: {raw}")
+data = json.loads(llm(f"Specs -> JSON with cpu, memory, storage: {specs}"))
+assert {"cpu", "memory", "storage"} <= data.keys()    # check before the next step
 ```
 
 ## Next skills

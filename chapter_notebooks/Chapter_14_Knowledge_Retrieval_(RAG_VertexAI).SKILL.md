@@ -3,7 +3,7 @@ name: rag
 description: Retrieve top-k chunks and ground the answer. Use for large or changing corpora. Not when the corpus fits in context.
 role: [memory]
 chapter: 14
-token_cost_estimate: 194
+token_cost_estimate: 192
 chains_with: [memory-management, reflection]
 ---
 
@@ -33,8 +33,8 @@ chains_with: [memory-management, reflection]
 
 ## Minimal example
 ```python
-docs = retriever.invoke(query)                       # top-k chunks
-ctx = "\n".join(d.page_content for d in docs)
+chunks = retrieve(query, k=4)                        # top-k by similarity
+ctx = "\n".join(chunks)
 answer = llm(f"Answer only from context; say 'unknown' otherwise.\n{ctx}\nQ: {query}")
 ```
 

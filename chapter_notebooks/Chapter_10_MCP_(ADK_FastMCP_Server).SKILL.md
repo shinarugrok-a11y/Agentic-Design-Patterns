@@ -3,7 +3,7 @@ name: mcp
 description: Tool discovery via MCP servers. Use for many or shared tools. Not for a few local functions.
 role: [memory, executor]
 chapter: 10
-token_cost_estimate: 226
+token_cost_estimate: 240
 chains_with: [a2a, exception-handling]
 ---
 
@@ -33,10 +33,10 @@ chains_with: [a2a, exception-handling]
 
 ## Minimal example
 ```python
-fs = MCPToolset(connection_params=StdioServerParameters(
-    command="npx", args=["-y", "@modelcontextprotocol/server-filesystem", ABS_DIR]),
-    tool_filter=["list_directory", "read_file"])
-agent = LlmAgent(name="fs_agent", tools=[fs])
+tools = server.list_tools()                         # discover, don't hard-code
+allowed = {t["name"] for t in tools} & {"list_directory", "read_file"}
+if "read_file" in allowed:                          # empty allow-list = no tools
+    text = server.call_tool("read_file", {"path": f"{ABS_DIR}/notes.md"})
 ```
 
 ## Next skills

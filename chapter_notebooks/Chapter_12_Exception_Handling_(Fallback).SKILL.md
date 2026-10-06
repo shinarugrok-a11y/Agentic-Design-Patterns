@@ -3,7 +3,7 @@ name: exception-handling
 description: Detect, retry, fall back, escalate. Use around anything that can fail. Not for deterministic errors.
 role: [safety]
 chapter: 12
-token_cost_estimate: 233
+token_cost_estimate: 230
 chains_with: [human-in-the-loop, guardrails]
 ---
 
@@ -33,11 +33,10 @@ chains_with: [human-in-the-loop, guardrails]
 
 ## Minimal example
 ```python
-primary  = Agent(name="primary", tools=[get_precise_location_info])
-fallback = Agent(name="fallback", tools=[get_general_area_info],
-    instruction='If state["primary_location_failed"]: get_general_area_info')
-root = SequentialAgent(sub_agents=[primary, fallback, responder])
-# the book never sets the flag; your tool must
+out = primary_tool(args)              # expected failure -> {"status": "error"}
+if out.get("status") == "error":
+    out = fallback_tool(args)         # degrade instead of crashing
+reply = respond(out) if out.get("status") != "error" else "Tried primary and fallback; both failed."
 ```
 
 ## Next skills

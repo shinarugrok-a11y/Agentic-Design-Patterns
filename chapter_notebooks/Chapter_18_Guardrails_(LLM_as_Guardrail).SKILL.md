@@ -3,7 +3,7 @@ name: guardrails
 description: Screen inputs, tool args and outputs against policy. Use for any exposed agent. Never rely on one layer.
 role: [safety]
 chapter: 18
-token_cost_estimate: 225
+token_cost_estimate: 222
 chains_with: [human-in-the-loop, evaluation-monitoring]
 ---
 
@@ -33,10 +33,10 @@ chains_with: [human-in-the-loop, evaluation-monitoring]
 
 ## Minimal example
 ```python
-def block(tool, args, ctx):
-    if tool.name == "run_shell" and "rm -rf" in args.get("cmd", ""):
+def check_tool_call(tool, args):      # your framework's pre-tool hook
+    if tool == "run_shell" and "rm -rf" in args.get("cmd", ""):
         return {"status": "blocked", "reason": "destructive"}
-agent = LlmAgent(name="safe", tools=[run_shell], before_tool_callback=block)
+    return None                       # None = allow
 ```
 
 ## Next skills
