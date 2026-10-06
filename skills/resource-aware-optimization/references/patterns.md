@@ -15,9 +15,9 @@ Query: {query}
 ```
 
 ## Key APIs
-- ADK: `LlmAgent(model='gemini-2.0-flash')` classifier, `gemini-2.5-pro` for reasoning, `google_search` tool for live data.
-- Router: `{'simple': flash, 'reasoning': pro, 'internet_search': flash_search}[label]`.
-- Cost: track tokens per tier; `usage_metadata` in responses.
+- ADK (book): Flash and Pro `Agent`s behind a `BaseAgent` router (word count < 20).
+- OpenAI (book): gpt-4o classifier -> gpt-4o-mini / o4-mini / gpt-4o + web search.
+- OpenRouter (book): `"model": "openrouter/auto"` or a `"models": [...]` fallback list.
 
 ## Pitfalls -> fixes
 - Hard query labelled simple -> critic on cheap tier.

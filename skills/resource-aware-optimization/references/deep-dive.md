@@ -1,15 +1,19 @@
 # Resource-Aware Optimization — deep dive
 
-Source: Chapter 16 + `Chapter_16_Resource_Optimization_(Code_Snippets)`,
-`Chapter_16_Resource_Optimization_(OI_Google_Search)`.
+Source: Chapter 16 (GT:L9386–L10037) + `Chapter_16_Resource_Optimization_(Code_Snippets)`,
+`Chapter_16_Resource_Optimization_(OI_Google_Search)`, and the misfiled
+`Chapter_02_Routing_(Openrouter).ipynb` (its code is this chapter's OpenRouter example).
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Rule of thumb (book)
+## Rule of thumb (SOURCE, GT:L9969)
 Use under strict API/compute budgets, in latency-sensitive apps, on
 resource-constrained hardware (edge/battery), when programmatically
 balancing quality vs. cost, or in multi-step workflows whose steps have
 different resource needs.
 
-## Technique catalogue (book)
+## Technique catalogue (SOURCE, GT:L9891–L9945)
 Dynamic model switching; adaptive tool use & selection; contextual pruning
 & summarisation; proactive resource prediction; cost-sensitive exploration
 in multi-agent systems; energy-efficient deployment; parallelization /
@@ -19,6 +23,7 @@ Also "fallback" (cheaper model if the primary is unavailable) and
 "budget-aware" behaviour (stop or simplify when spend approaches a cap).
 
 ## Pattern A: ADK router between Flash and Pro (conceptual)
+Provenance: SOURCE (abridged) — condensed from GT:L9472–L9550 (`Chapter_16_Resource_Optimization_(Code_Snippets)`); the book marks it conceptual, not runnable.
 ```python
 gemini_pro_agent = Agent(name="GeminiProAgent", model="gemini-2.5-pro",
     description="A highly capable agent for complex queries.",
@@ -41,6 +46,7 @@ class QueryRouterAgent(BaseAgent):
             yield Event(author=self.name, content=f"Pro Agent processed: {response}")
 ```
 Add a **Critique Agent** that scores responses and feeds back into routing:
+Provenance: SOURCE (abridged) — Critic Agent prompt condensed from GT:L9573–L9590.
 ```
 You are the **Critic Agent**, serving as the quality assurance arm of our collaborative research
 assistant system. Your primary function is to **meticulously review and challenge** information from
@@ -52,6 +58,7 @@ All criticism must be constructive. Structure your feedback clearly, drawing att
 ```
 
 ## Pattern B: classifier -> model tier (+ optional search)
+Provenance: SOURCE (abridged) — condensed from GT:L9654–L9773 (`Chapter_16_Resource_Optimization_(OI_Google_Search)`); error handling and prints removed.
 ```python
 def classify_prompt(prompt: str) -> dict:
     system_message = {"role": "system", "content": (
@@ -86,24 +93,58 @@ def handle_prompt(prompt):
     answer, model = generate_response(prompt, cls, results)
     return {"classification": cls, "response": answer, "model": model}
 ```
-Observed: "What is the capital of Australia?" -> simple -> gpt-4o-mini.
-Note the classifier itself runs on a strong model; for real savings use a
+The notebook's sample prompt "What is the capital of Australia?" is meant to
+classify as simple -> gpt-4o-mini; this was not executed here (needs API keys).
+Model ids are time-specific (UNCERTAIN today). DERIVED note: the classifier itself runs on a strong model; for real savings use a
 small model or heuristics for the classification step.
 
-## Cost accounting sketch
+## Pattern C: model routing through a gateway (OpenRouter)
+Provenance: SOURCE — verbatim, GT:L9814–L9834; identical to notebook cell 0 of the misfiled `Chapter_02_Routing_(Openrouter).ipynb`.
 ```python
-COST = {"gpt-4o-mini": 0.15, "o4-mini": 1.10, "gpt-4o": 2.50}   # $/1M input tokens (illustrative)
-spend += tokens_in * COST[model] / 1e6
-if spend > budget * 0.9: downgrade_tier()
+import requests
+import json
+response = requests.post(
+  url="https://openrouter.ai/api/v1/chat/completions",
+  headers={
+    "Authorization": "Bearer <OPENROUTER_API_KEY>",
+    "HTTP-Referer": "<YOUR_SITE_URL>", # Optional. Site URL for rankings on openrouter.ai.
+    "X-Title": "<YOUR_SITE_NAME>", # Optional. Site title for rankings on openrouter.ai.
+  },
+  data=json.dumps({
+    "model": "openai/gpt-4o", # Optional
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the meaning of life?"
+      }
+    ]
+  })
+)
+```
+`<OPENROUTER_API_KEY>` is a placeholder: read the key from an environment
+variable in real code, never inline it.
+
+The book names two OpenRouter routing modes (SOURCE, GT:L9846–L9876):
+automated selection with `"model": "openrouter/auto"`, and sequential model
+fallback with an ordered `"models": [...]` list where the next model is tried
+on unavailability, rate limiting or content filtering. Current OpenRouter
+behaviour was not checked (UNCERTAIN).
+
+## Cost accounting sketch
+Provenance: DERIVED — ILLUSTRATIVE, not from the book. The book gives no prices; fill `PRICE_PER_1M` from your provider's current price list.
+```python
+spend += tokens_in * PRICE_PER_1M[model] / 1e6
+if spend > budget * 0.9:
+    model = next_cheaper_tier(model)
 ```
 
-## Checklist
+## Checklist (DERIVED)
 - Measure before optimising (`evaluation-monitoring`: latency, tokens).
 - Keep a quality floor: sample cheap-path answers for critique.
 - Prune context (summaries, windowing) before switching models.
 - Define degradation order: model tier -> fewer tools -> shorter output -> refuse.
 
-## Pattern variants
+## Pattern variants (SOURCE terms, GT:L9891–L9945; glosses DERIVED)
 - **Dynamic model switching** — a router agent classifies complexity and picks Gemini Flash vs. Pro (or gpt-4o-mini vs. o4-mini vs. gpt-4o); the core variant.
 - **Adaptive tool selection** — route on what the query needs, not only how hard it is: reach for search only when the answer sits outside training data, since each tool carries its own cost.
 - **Critique-agent feedback loop** — a separate critic scores answers and its verdicts retune the router; catches simple-to-Pro and complex-to-Flash misroutes.
@@ -112,6 +153,7 @@ if spend > budget * 0.9: downgrade_tier()
 
 ## More prompt templates
 Router/classifier (closed label set plus JSON, so the tier map cannot drift):
+Provenance: SOURCE (abridged) — reworded from the `classify_prompt` system message, GT:L9655–L9672.
 ```
 You are a classifier that analyzes user prompts and returns one of three
 categories ONLY: simple, reasoning, internet_search.
@@ -122,6 +164,7 @@ Respond ONLY with JSON like: { "classification": "simple" }
 ```
 
 Critic agent (the signal that keeps a cheap tier honest):
+Provenance: SOURCE (abridged) — shortened from GT:L9573–L9590.
 ```
 You are the Critic Agent, the quality assurance arm of this system. Review the
 answering agent's output for factual correctness, thoroughness, and bias. Name
@@ -129,10 +172,11 @@ missing data or inconsistent reasoning, and propose concrete fixes.
 ```
 
 ## Framework notes
-- **Google ADK** — tiers are `Agent`s differing only in `model=`; the router is a `BaseAgent` whose `_run_async_impl` yields `Event`s and would `transfer_to_agent` in production.
-- **OpenAI SDK / OpenRouter** — OpenRouter does this at the API layer: `"model": "openrouter/auto"`, or an ordered model list for sequential fallback.
+- **Google ADK** (SOURCE) — tiers are `Agent`s differing only in `model=`; the router is a `BaseAgent` whose `_run_async_impl` yields `Event`s; the book comments that a real setup would use `transfer_to_agent` (GT:L9533).
+- **OpenAI SDK** (SOURCE) — Pattern B.
+- **OpenRouter** (SOURCE) — Pattern C: routing at the API layer.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Router misjudges complexity** — a word-count heuristic calls a short but hard question simple; back it with a critic agent and let repeated "inadequate Flash answer" verdicts move the threshold.
 - **Router overhead exceeds savings** — an LLM classifier on gpt-4o can cost more than the cheap answer it buys; classify with a small model or heuristic, and skip routing where the tier is already known.
 - **Budget tracked per call, never in aggregate** — charge a running counter after every call instead of only checking a per-request cap; the router must read remaining budget and time, not just the query.

@@ -17,7 +17,7 @@ ONLY output one word.
 ## Key APIs
 - LangChain: `RunnableBranch((lambda x: x['decision'] == 'booker', booker_chain), ..., default)`.
 - ADK: `Agent(name="Coordinator", sub_agents=[booker, info])` auto-delegates on sub-agent `description`.
-- OpenRouter: one endpoint, `model=` selects provider; route by cost/quality tier.
+- Model-tier routing (OpenRouter) is Ch 16: see `resource-aware-optimization`.
 
 ## Pitfalls -> fixes
 - Overlapping handler descriptions -> make them mutually exclusive.
