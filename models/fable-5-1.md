@@ -28,7 +28,7 @@ plus 1-3 task-specific skills (e.g. rag, tool-use, a2a, exploration-discovery).
 ## Should not
 - Execute high-volume, repetitive tool loops itself; delegate them.
 - Retry the same failing tool call more than twice.
-- Take an irreversible action without a human APPROVE for that action; a plan or silence is not one.
+- Take an irreversible action without a human APPROVE for that action; a plan or silence is not one. Gate G2, `templates/gates.md`.
 - Paste whole reference files into sub-agent prompts; pass the skill id and let them load it.
 
 ## Handoff format to executors

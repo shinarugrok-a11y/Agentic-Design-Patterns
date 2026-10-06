@@ -10,9 +10,10 @@ Requires: pip install tiktoken
 
 Checks structure, manifest <-> SKILL.md consistency, token caps, notebook
 companions, that examples run offline, and that AGENTS.md + skills/INDEX.md +
-any two same-role SKILL.md files + one references/patterns.md stays < 3000
-tokens for every role pair (the Step 7 gate, rebased from manifest.json to the
-generated index that bots actually read at boot).
+the boot templates + any two same-role SKILL.md files + one references/patterns.md stays < 3000
+tokens for every role pair (the Step 7 gate). The base is what bots read at boot:
+AGENTS.md + skills/INDEX.md + every templates/*.md linked from AGENTS.md (the
+gates); it was AGENTS.md + manifest.json before the slim index existed.
 
 Boot path: AGENTS.md is the single entry point with ordered boot steps, each
 with a Done: check; its profile table has a fallback and every profile exists;
@@ -72,6 +73,8 @@ def parse_frontmatter(text):
             v = [x.strip() for x in v.strip("[]").split(",") if x.strip()]
         elif v.isdigit():
             v = int(v)
+        elif v == "null":
+            v = None
         fm[k.strip()] = v
     return fm, m.group(2)
 
@@ -101,10 +104,9 @@ def render_index(manifest):
     """The slim index bots read at boot (manifest.json stays the full record for tools)."""
     out = ["# Skill index", "",
            "Generated from `manifest.json` by `python3 tools/validate.py --sync`; do not edit.", "",
-           "Pick rule: lowercase the task. A signal matches as a whole word or phrase, plus an optional "
-           "s, es, d, ed or ing. Every row with a match is a candidate: safety rows first in table order, "
-           "then the rest by most matches, then table order. Load at most 3 `skills/<id>/SKILL.md`; none "
-           "if nothing matches. Load a `chains_with` skill only when its \"Next skills\" condition holds.", "",
+           "Pick rule: lowercase the task; a signal matches as a whole word or phrase (+ s, es, d, ed, ing). "
+           "Safety rows that match come first, then others by most matches, then table order. Load at most 3 "
+           "`skills/<id>/SKILL.md`, none if nothing matches.", "",
            "| id | role | use when | signals |", "|---|---|---|---|"]
     for s in manifest["skills"]:
         out.append(f"| {s['id']} | {', '.join(s['role'])} | {s['when_to_use']} | {', '.join(s['signals'])} |")
@@ -149,7 +151,8 @@ def sync(manifest):
     Ids and chapters become file paths, so they are validated before anything is written."""
     bad = [repr(s.get("id")) for s in manifest["skills"]
            if not (isinstance(s.get("id"), str) and ID_RE.fullmatch(s["id"])
-                   and type(s.get("chapter")) is int and 1 <= s["chapter"] <= 99)]
+                   and ((type(s.get("chapter")) is int and 1 <= s["chapter"] <= 99)
+                        or (s.get("chapter") is None and s.get("kind") == "operational")))]
     if bad:
         sys.exit(f"sync refused: unsafe manifest id/chapter {', '.join(bad)}; nothing written")
     for s in manifest["skills"]:
@@ -162,7 +165,8 @@ def sync(manifest):
         text = re.sub(r"^token_cost_estimate: \d+$", f"token_cost_estimate: {est}", text, count=1, flags=re.M)
         s["token_cost_estimate"] = est
         open(p, "w", encoding="utf-8").write(text)
-        for nb in glob.glob(os.path.join(ROOT, "chapter_notebooks", f"Chapter_{s['chapter']:02d}_*.ipynb")):
+        for nb in (glob.glob(os.path.join(ROOT, "chapter_notebooks", f"Chapter_{s['chapter']:02d}_*.ipynb"))
+                   if s["chapter"] is not None else []):
             open(nb[:-len(".ipynb")] + ".SKILL.md", "w", encoding="utf-8").write(text)
     write_manifest(manifest)
     open(os.path.join(ROOT, INDEX_PATH), "w", encoding="utf-8").write(render_index(manifest))
@@ -185,10 +189,16 @@ if "--sync" in sys.argv:
     manifest = json.loads(read("manifest.json"))
 skills = manifest["skills"]
 ids = [s["id"] for s in skills]
-check("manifest has 21 skills", len(skills) == 21, str(len(skills)))
+patterns = [s for s in skills if s.get("kind") == "pattern"]
+operational = [s for s in skills if s.get("kind") == "operational"]
+check("manifest kinds are pattern or operational", len(patterns) + len(operational) == len(skills))
+check("manifest has 21 pattern skills (one per chapter)", len(patterns) == 21, str(len(patterns)))
+check("operational skills have chapter null", all(s["chapter"] is None for s in operational),
+      ", ".join(s["id"] for s in operational))
 check("manifest ids unique + kebab-case",
       len(set(ids)) == len(ids) and all(isinstance(i, str) and ID_RE.fullmatch(i) for i in ids))
-check("manifest chapters are exactly 1..21", sorted(s["chapter"] for s in skills) == list(range(1, 22)))
+check("pattern skill chapters are exactly 1..21",
+      sorted(s["chapter"] for s in patterns if type(s["chapter"]) is int) == list(range(1, 22)))
 required = {"id", "name", "chapter", "role", "when_to_use", "when_not_to_use", "inputs", "outputs",
             "failure_modes", "chains_with", "token_cost_estimate", "kind", "signals"}
 check("manifest records have all required fields", all(required <= set(s) for s in skills))
@@ -213,6 +223,7 @@ for s in skills:
     text = read(f"{d}/SKILL.md")
     fm, body = parse_frontmatter(text)
     if fm is None or not (fm.get("name") == s["id"] and fm.get("chapter") == s["chapter"]
+                          and fm.get("kind", "pattern") == s["kind"]
                           and fm.get("role") == s["role"] and fm.get("chains_with") == s["chains_with"]
                           and fm.get("token_cost_estimate") == s["token_cost_estimate"]
                           and all(h in body for h in SECTIONS)):
@@ -230,8 +241,9 @@ check("every SKILL.md body <= 400 tokens (cl100k_base and o200k_base)", body_ok,
       f"body min {min(body_tok.values())}, max {max(body_tok.values())}, total {sum(body_tok.values())}")
 check("references/patterns.md non-trivial for all skills", pat_ok,
       f"min {min(pat_tok.values())}, max {max(pat_tok.values())} tokens")
-check("exactly 21 skill directories",
-      len([p for p in glob.glob(os.path.join(ROOT, "skills", "*")) if os.path.isdir(p)]) == 21)
+skill_dirs = sorted(os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "skills", "*")) if os.path.isdir(p))
+check("skill directories are exactly the manifest ids", skill_dirs == sorted(ids),
+      f"extra={sorted(set(skill_dirs) - set(ids))} missing={sorted(set(ids) - set(skill_dirs))}")
 
 # --- examples run offline -------------------------------------------------
 failed = []
@@ -304,9 +316,27 @@ check(f"{INDEX_PATH} lists every manifest skill id exactly once, nothing else",
 check(f"{INDEX_PATH} roles match manifest", not role_bad, ", ".join(role_bad))
 check(f"{INDEX_PATH} rows each have signals", all(r["signals"] for r in std["routes"]))
 
+TEMPLATES = ["templates/gates.md", "templates/connectors.md", "templates/profile.md",
+             "templates/memory-seed.md", "templates/routines.md"]
+tmpl_missing = [t for t in TEMPLATES if not os.path.exists(os.path.join(ROOT, t))]
+check("operational templates exist and are labelled DERIVED/operational",
+      not tmpl_missing and all("DERIVED/operational" in read(t) for t in TEMPLATES), ", ".join(tmpl_missing))
+check("AGENTS.md boot path links templates/gates.md", "templates/gates.md" in std["always"])
+gates_text = read("templates/gates.md") if "templates/gates.md" not in tmpl_missing else ""
+check("gates template has G1-G7 and ship = NO default",
+      all(f"| G{k} |" in gates_text for k in range(1, 8)) and "`ship = NO`" in gates_text)
+env_lines = [l for l in read(".env.example").splitlines() if l.strip() and not l.startswith("#")] \
+    if os.path.exists(os.path.join(ROOT, ".env.example")) else None
+check(".env.example exists with empty placeholders only",
+      env_lines is not None and all(re.fullmatch(r"[A-Z][A-Z0-9_]*=", l) for l in env_lines),
+      "missing" if env_lines is None else ", ".join(l for l in env_lines if not re.fullmatch(r"[A-Z][A-Z0-9_]*=", l)))
+model_files = sorted(os.path.relpath(p, ROOT) for p in glob.glob(os.path.join(ROOT, "models", "*.md")))
+no_gate_ptr = [m for m in model_files if "templates/gates.md" not in read(m)]
+check("every models/*.md points its gate rules at templates/gates.md", not no_gate_ptr, ", ".join(no_gate_ptr))
+
 MUST_NOT_EXIST = {"CLAUDE.md"}
 link_bad = []
-docs = ["AGENTS.md", "GEMINI.md", INDEX_PATH] + std["always"] + sorted(
+docs = ["AGENTS.md", "GEMINI.md", INDEX_PATH] + sorted(set(std["always"]) | set(TEMPLATES)) + sorted(
     os.path.relpath(p, ROOT) for p in glob.glob(os.path.join(ROOT, "models", "*.md")))
 for doc in docs:
     if not os.path.exists(os.path.join(ROOT, doc)):
@@ -348,7 +378,7 @@ check("every deep-dive code block has a Provenance: line", not prov_bad, ", ".jo
 
 # --- notebook companions --------------------------------------------------
 nbs = sorted(glob.glob(os.path.join(ROOT, "chapter_notebooks", "Chapter_*.ipynb")))
-by_chapter = {s["chapter"]: s["id"] for s in skills}
+by_chapter = {s["chapter"]: s["id"] for s in patterns}
 comp_missing, comp_diff = [], []
 for nb in nbs:
     ch = int(re.search(r"Chapter_(\d+)_", os.path.basename(nb)).group(1))
@@ -390,8 +420,10 @@ for r in standup_sim.simulate():
 # --- Step 7: low-token agent simulation -----------------------------------
 print(f"\n=== Low-token agent simulation (cl100k_base tokens, budget {BUDGET}) ===")
 index_tok = tok(read(INDEX_PATH))
-base = tok(agents) + index_tok
-print(f"AGENTS.md        {tok(agents):>5}\nskills/INDEX.md  {index_tok:>5}\nbase             {base:>5}"
+gates_tok = sum(tok(read(f)) for f in std["always"])
+base = tok(agents) + index_tok + gates_tok
+print(f"AGENTS.md        {tok(agents):>5}\nskills/INDEX.md  {index_tok:>5}\n"
+      f"{' + '.join(std['always']) or 'boot templates':16} {gates_tok:>5}\nbase             {base:>5}"
       f"\n(manifest.json {tok(read('manifest.json'))} is for tools and not on the boot path)")
 rows = []
 for role in ROLES:
@@ -405,7 +437,7 @@ print(f"combos (same-role pair + one patterns.md): {len(rows)}; under budget: {s
 print(f"  best  {best[0]}: {best[1]} {best[2]}+{best[3]} ref={best[4]}")
 print(f"  worst {worst[0]}: {worst[1]} {worst[2]}+{worst[3]} ref={worst[4]} (headroom {BUDGET - worst[0]})")
 ex = base + full_tok["prompt-chaining"] + full_tok["tool-use"] + pat_tok["tool-use"]
-print(f"executor walk-through: {tok(agents)} + {index_tok} + {full_tok['prompt-chaining']} "
+print(f"executor walk-through: {tok(agents)} + {index_tok} + {gates_tok} + {full_tok['prompt-chaining']} "
       f"+ {full_tok['tool-use']} + {pat_tok['tool-use']} = {ex}")
 check(f"simulation: executor walk-through < {BUDGET}", ex < BUDGET, f"{ex} tokens")
 check(f"simulation: every role pair + one patterns.md < {BUDGET}", worst[0] < BUDGET, f"worst {worst[0]} tokens")

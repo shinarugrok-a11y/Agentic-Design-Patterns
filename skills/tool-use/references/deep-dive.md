@@ -174,5 +174,5 @@ placeholder: {agent_scratchpad}
 ## Failure modes in depth (DERIVED)
 - **Vague tool descriptions cause wrong-tool selection** — the docstring is the model's only signal. Name the return type and include example queries the tool covers.
 - **Hallucinated or malformed arguments** — use few, flat, annotated parameters (`ticker: str -> float`) so schema validation rejects bad calls before the API is hit.
-- **Unvalidated side effects** — split read tools from write tools; gate irreversible calls behind explicit confirmation rather than tool-choice.
+- **Unvalidated side effects** — split read tools from write tools; gate irreversible calls behind explicit confirmation rather than tool-choice (gate G2, `templates/gates.md`).
 - **Tool errors returned raw trigger retry loops** — raise a typed `ValueError` and instruct the task what to report on failure, so the model does not re-read an error string as data and retry forever.

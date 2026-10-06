@@ -51,6 +51,14 @@
       "expect_skills": [],
       "forbid_skills": [],
       "negative": true
+    },
+    {
+      "id": "pre-merge-review",
+      "runtime": "Codex CLI",
+      "task": "run the security review before I open a PR",
+      "expect_profile": "models/coding-cli-agent.md",
+      "expect_skills": ["ship-security-checklist"],
+      "forbid_skills": ["planning", "multi-agent"]
     }
   ]
 }

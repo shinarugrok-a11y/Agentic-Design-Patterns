@@ -156,4 +156,4 @@ automatically, so the format must be exact.
 - **Unbounded search** — open-ended generation never terminates on its own; bound it with `max_steps`, a fixed number of rounds, an explicit compute budget, or an Elo plateau.
 - **Untested hypotheses** — plausible prose scores well and means nothing; close the loop with an experiment phase that runs code or a wet-lab test, as the co-scientist's AML and liver-fibrosis results did.
 - **Generator/reviewer collapse** — one critic carrying the generator's priors approves its own blind spots; use several distinct reviewer personas (ideally a different model), plus a meta-review to surface recurring weaknesses.
-- **Irreversible actions** — exploration touching live systems does real damage; screen research goals and hypotheses on input, execute in a sandbox, and keep a human approving anything that leaves it.
+- **Irreversible actions** — exploration touching live systems does real damage; screen research goals and hypotheses on input, execute in a sandbox, and keep a human approving anything that leaves it (gate G2, `templates/gates.md`).
