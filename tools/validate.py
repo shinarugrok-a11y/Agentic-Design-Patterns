@@ -13,9 +13,9 @@ any two same-role SKILL.md files + one references/patterns.md stays < 3000
 tokens for every role pair (the Step 7 gate).
 
 The Step 7 gate is an invariant, not a description of the current result.
-The 2026-09-23 repository audit measured an executor walk-through of 3006
-tokens and a worst pair of 3014, both over BUDGET. Do not raise BUDGET to
-hide that failure. See validation/audit/02-evidence-map.md.
+Do not raise BUDGET to make a failure pass; trim AGENTS.md, manifest.json or
+the heaviest cards instead (history: validation/audit/02-evidence-map.md and
+validation/skill-reaudit/LOG.md).
 """
 import glob
 import itertools

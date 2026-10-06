@@ -8,8 +8,7 @@
 
 ## Prompt template
 ```
-Docstring: Provides factual information on a topic. Use it for questions like
-'What is the capital of France?'.
+Docstring: Provides factual information on a topic.
 Task: Price for AAPL? Use the 'Stock Price Lookup Tool'; if not found, say so.
 ```
 
