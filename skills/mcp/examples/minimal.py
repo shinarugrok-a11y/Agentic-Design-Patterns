@@ -33,6 +33,8 @@ server = ToyMCPServer()
 @server.tool
 def greet(name: str) -> str:
     """Generates a personalized greeting."""
+    if not isinstance(name, str) or not name.strip() or len(name) > 100:
+        raise ValueError("name must be a non-empty string of at most 100 characters")
     return f"Hello, {name}! Nice to meet you."
 
 
@@ -48,7 +50,8 @@ class MCPToolset:
         self._server = server
 
     def call(self, tool_name: str, **args):
-        assert any(t["name"] == tool_name for t in self.tools), f"{tool_name} not exposed to this agent"
+        if not any(t["name"] == tool_name for t in self.tools):     # not assert: survives python -O
+            raise PermissionError(f"{tool_name} not exposed to this agent")
         return self._server.call_tool(tool_name, args)
 
 
@@ -58,5 +61,7 @@ if __name__ == "__main__":
     print(toolset.call("greet", name="Ada"))
     try:
         toolset.call("delete_everything")
-    except AssertionError as e:
+    except PermissionError as e:
         print("blocked:", e)
+    else:
+        raise SystemExit("tool_filter failed: delete_everything ran")

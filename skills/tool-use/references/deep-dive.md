@@ -100,8 +100,11 @@ code_agent = LlmAgent(name="calculator_agent", model="gemini-2.0-flash",
 
 # Enterprise search over a Vertex AI datastore
 from google.adk import agents
+DATASTORE_ID = os.environ.get("DATASTORE_ID")          # book: GT:L3607, checked at GT:L3688
+if not DATASTORE_ID:
+    raise SystemExit("Error: DATASTORE_ID environment variable is not set.")
 vsearch_agent = agents.VSearchAgent(name="q2_strategy_vsearch_agent", model="gemini-2.0-flash-exp",
-    datastore_id=os.environ["DATASTORE_ID"], model_parameters={"temperature": 0.0})
+    datastore_id=DATASTORE_ID, model_parameters={"temperature": 0.0})
 ```
 Inspecting code-execution events:
 Provenance: SOURCE (abridged) — condensed from GT:L3502–L3516 (prints and flags removed).

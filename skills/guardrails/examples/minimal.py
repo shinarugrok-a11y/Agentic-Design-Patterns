@@ -36,6 +36,8 @@ def screen_output(text: str) -> str:
 
 
 def handle(user_input: str, state: dict) -> str:
+    if not isinstance(user_input, str) or not user_input.strip() or len(user_input) > 4000:
+        return "blocked: input must be non-empty text under 4000 characters"
     verdict = screen_input(user_input)
     if verdict["decision"] == "unsafe":
         return f"blocked: {json.dumps(verdict)}"
