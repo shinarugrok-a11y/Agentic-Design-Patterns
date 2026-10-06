@@ -1,0 +1,117 @@
+{
+  "description": "Mutation fixtures for tools/validate.py, run by tools/validator_fixtures.py in temp copies of the repo that have no .git. expect is the validator's overall result (exit 0 PASS, 1 FAIL, 2 BLOCKED); expect_status names checks (substring) that must have that status. Unknown = BLOCKED, never PASS.",
+  "cases": [
+    {
+      "id": "clean-copy-no-git",
+      "expect": "PASS",
+      "twice": true,
+      "expect_status": {"PDF and notebooks match pinned SHA-256": "PASS", "wrote nothing": "PASS"}
+    },
+    {
+      "id": "bad-mcp-empty-filter-exposes-all",
+      "expect": "FAIL",
+      "mutations": [{"op": "replace", "path": "skills/mcp/examples/minimal.py",
+                     "old": "if tool_filter is None or t[\"name\"] in tool_filter", "new": "if not tool_filter or t[\"name\"] in tool_filter"}],
+      "expect_status": {"example mcp ": "FAIL"}
+    },
+    {
+      "id": "bad-idor-guard-fails-open",
+      "expect": "FAIL",
+      "mutations": [{"op": "replace", "path": "skills/guardrails/examples/minimal.py",
+                     "old": "if not (isinstance(expected, str) and expected and isinstance(actual, str) and actual == expected):",
+                     "new": "if actual and actual != expected:"}],
+      "expect_status": {"example guardrails ": "FAIL"}
+    },
+    {
+      "id": "bad-hitl-auto-sends",
+      "expect": "FAIL",
+      "mutations": [{"op": "replace", "path": "skills/human-in-the-loop/examples/minimal.py",
+                     "old": "    if approver is None:\n", "new": "    if approver is None:\n        return Outcome(\"executed\", execute(action), audit)\n"}],
+      "expect_status": {"example human-in-the-loop ": "FAIL", "routing fixture email-on-my-behalf": "FAIL"}
+    },
+    {
+      "id": "bad-example-uses-network",
+      "expect": "FAIL",
+      "mutations": [{"op": "prepend", "path": "skills/rag/examples/minimal.py",
+                     "content": "import urllib.request\nurllib.request.urlopen(\"http://example.com\", timeout=5)\n"}],
+      "expect_status": {"example rag ": "FAIL"},
+      "expect_output": ["network access disabled"]
+    },
+    {
+      "id": "bad-boot-step-without-done",
+      "expect": "FAIL",
+      "mutations": [{"op": "replace", "path": "AGENTS.md", "old": "   Done: you can list the ids loaded.\n", "new": ""}],
+      "expect_status": {"ordered boot steps": "FAIL"}
+    },
+    {
+      "id": "bad-stale-index",
+      "expect": "FAIL",
+      "mutations": [{"op": "append", "path": "skills/INDEX.md", "content": "| extra | safety | hand-edited | x |\n"}],
+      "expect_status": {"skills/INDEX.md matches render": "FAIL"}
+    },
+    {
+      "id": "bad-bare-claude-md",
+      "expect": "FAIL",
+      "mutations": [{"op": "write", "path": "CLAUDE.md", "content": "# project notes\n"}],
+      "expect_status": {"no CLAUDE.md": "FAIL"}
+    },
+    {
+      "id": "bad-env-example-has-value",
+      "expect": "FAIL",
+      "mutations": [{"op": "replace", "path": ".env.example", "old": "LLM_API_KEY=\n", "new": "LLM_API_KEY=placeholder-value\n"}],
+      "expect_status": {".env.example": "FAIL"}
+    },
+    {
+      "id": "bad-notebook-modified",
+      "expect": "FAIL",
+      "mutations": [{"op": "append", "path": "chapter_notebooks/Chapter_01_Prompt_Chaining_(Code_Example).ipynb", "content": "\n"}],
+      "expect_status": {"PDF and notebooks match pinned SHA-256": "FAIL"}
+    },
+    {
+      "id": "bad-boot-over-token-gate",
+      "expect": "FAIL",
+      "mutations": [{"op": "append", "path": "templates/gates.md",
+                     "content": "\nPadding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy. Padding that makes the boot path too heavy.\n"}],
+      "expect_status": {"every role pair + one patterns.md": "FAIL"}
+    },
+    {
+      "id": "bad-sync-path-traversal",
+      "expect": "FAIL",
+      "args": ["--sync"],
+      "expect_unchanged": true,
+      "mutations": [{"op": "replace", "path": "manifest.json", "old": "{\"id\":\"rag\",", "new": "{\"id\":\"../../evil\","}],
+      "expect_output": ["sync refused: unsafe manifest id"]
+    },
+    {
+      "id": "missing-example-run-blocked",
+      "expect": "FAIL",
+      "mutations": [{"op": "delete", "path": "skills/rag/examples/minimal.py"}],
+      "expect_status": {"example rag ": "BLOCKED", "every skill has SKILL.md": "FAIL"}
+    },
+    {
+      "id": "blocked-no-tiktoken",
+      "expect": "BLOCKED",
+      "hide_tiktoken": true,
+      "expect_status": {"skill tokens: remaining checks": "BLOCKED", "Step 7 low-token simulation": "BLOCKED", "stand-up path": "BLOCKED", "manifest has 21 pattern skills": "PASS"}
+    },
+    {
+      "id": "blocked-example-timeout",
+      "expect": "BLOCKED",
+      "env": {"VALIDATE_EXAMPLE_TIMEOUT": "3"},
+      "mutations": [{"op": "prepend", "path": "skills/routing/examples/minimal.py", "content": "import time\ntime.sleep(30)\n"}],
+      "expect_status": {"example routing ": "BLOCKED"}
+    },
+    {
+      "id": "blocked-missing-hash-pins",
+      "expect": "BLOCKED",
+      "mutations": [{"op": "delete", "path": "validation/frozen-sha256.txt"}],
+      "expect_status": {"PDF and notebooks match pinned SHA-256": "BLOCKED"}
+    },
+    {
+      "id": "blocked-invalid-manifest",
+      "expect": "BLOCKED",
+      "mutations": [{"op": "write", "path": "manifest.json", "content": "{ not json"}],
+      "expect_status": {"manifest: remaining checks": "BLOCKED"}
+    }
+  ]
+}
