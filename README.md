@@ -12,7 +12,7 @@ The book text states: "All my royalties are donated to Save the Children." That 
 | --- | --- | --- |
 | Book PDF | `Agentic_Design_Patterns_Complete.pdf` | Present. Poppler `pdfinfo` reports **458 pages**, letter size, producer PyPDF2, not encrypted. |
 | Text extract | `ground-truth/agentic_design_patterns.txt` | Present. A fresh `pdftotext -layout` (Poppler 24.02.0) matches 17,642 of 17,659 lines. The 17 differing lines are emoji wrap in four clusters. |
-| Skill library | `skills/`, `manifest.json`, `AGENTS.md`, `models/` | Structure checks pass. All 21 `examples/minimal.py` files exit 0 offline. The validator's 3,000-token simulation **fails** (3,006 and 3,014). |
+| Skill library | `skills/`, `manifest.json`, `AGENTS.md`, `STANDUP.md`, `models/` | `python3 tools/validate.py` passes, including the 3,000-token simulation (worst pair 2,996) and the stand-up fixtures. All 21 `examples/minimal.py` files exit 0 offline. Re-audit log: `validation/skill-reaudit/LOG.md`. |
 | Chapter notebooks | `chapter_notebooks/` | 65 notebooks. Illustrative snippets and fragments. Seven appendix files are Google Drive placeholders. Dependencies are not pinned. |
 | Audit | `validation/audit/` | This evidence pass (2026-09-23). Independent of any Claude or Anthropic extraction. |
 
@@ -24,6 +24,7 @@ Verified here means a file, command, or test in this repository was inspected or
 .
 ├── README.md
 ├── AGENTS.md                  # how an agent should load the skill library
+├── STANDUP.md                 # step-by-step stand-up path + routing table for a fresh agent
 ├── manifest.json              # index of the 21 skills
 ├── Agentic_Design_Patterns_Complete.pdf   # book PDF (458 pages)
 ├── ground-truth/
@@ -34,10 +35,13 @@ Verified here means a file, command, or test in this repository was inspected or
 │   ├── references/patterns.md
 │   ├── references/deep-dive.md
 │   └── examples/minimal.py    # offline stub; the examples that actually run here
-├── models/                    # per-model loading notes (Fable 5.1, Grok 4.6, Muse)
+├── models/                    # runtime profiles (Fable 5.1, Grok 4.6, Muse, coding CLI, desktop assistant)
 ├── chapter_notebooks/         # book-related notebooks and generated .SKILL.md copies
 ├── tools/validate.py          # skill-library checks; requires tiktoken
-└── validation/audit/          # structural map, evidence, corrections, security notes
+├── tools/standup_sim.py       # simulates STANDUP.md on tests/fixtures/standup_tasks.json
+├── tools/provenance_scan.py   # where each skill code line comes from (book, notebook, none)
+├── tests/fixtures/            # stand-up task fixtures
+└── validation/                # audit/ evidence pass; skill-reaudit/ per-skill fixes
 ```
 
 Nothing in this tree is a deployed service. There is no application server, database, or frontend.
@@ -50,7 +54,7 @@ Open `Agentic_Design_Patterns_Complete.pdf`, or search `ground-truth/agentic_des
 
 ### Use the skill library
 
-Follow `AGENTS.md`: read `manifest.json`, then load only the `skills/<id>/SKILL.md` files you need.
+A fresh agent follows [STANDUP.md](STANDUP.md): identify the runtime, load one `models/` profile, read `manifest.json`, then load at most three `skills/<id>/SKILL.md` chosen by the routing table. `AGENTS.md` is the short router.
 
 Check the library:
 
@@ -59,7 +63,7 @@ python3 -m pip install tiktoken
 python3 tools/validate.py
 ```
 
-On 2026-09-23 that command passed the structural checks and all 21 offline examples, and failed the two 3,000-token simulation checks. `tiktoken` is the validator's dependency. It is not declared in a requirements file because this repository has no `requirements.txt`.
+On 2026-09-23 that command failed the two 3,000-token simulation checks (3,006 and 3,014). Card trims on this branch fixed them without raising the budget; see `validation/skill-reaudit/LOG.md`. `python3 tools/standup_sim.py` runs only the stand-up fixtures. `tiktoken` is the validator's dependency. It is not declared in a requirements file because this repository has no `requirements.txt`.
 
 `python3 tools/validate.py --sync` rewrites `token_cost_estimate` values and the `chapter_notebooks/Chapter_*.SKILL.md` copies. Run it only when you intend to regenerate those files.
 
@@ -110,11 +114,11 @@ The 2026-09-23 audit did not:
 
 - Re-proof the book prose against a print edition
 - Execute notebooks that import Google ADK, LangChain, CrewAI, OpenAI, FastMCP, or OpenEvolve, or that call live APIs
-- Confirm the context-window and price figures in `models/*.md` against vendors
+- Confirm the context-window and price figures in `models/*.md` against vendors (they are marked UNVERIFIED)
 - Confirm that the Google Drive folder or the Google Docs table of contents is still reachable
 - Confirm current retail status of the book
 - Decide a license for snippets whose headers mention a missing `LICENSE` file
-- Shrink the skill cards to satisfy the 3,000-token simulation, or raise that budget to hide the failure
+- Shrink the skill cards to satisfy the 3,000-token simulation (done later on this branch, budget unchanged)
 - Compare this audit with any Claude or Anthropic extraction
 
 Start with `validation/audit/README.md` for the evidence behind these statements.

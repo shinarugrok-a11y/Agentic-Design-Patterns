@@ -1,0 +1,56 @@
+{
+  "description": "Stand-up path fixtures. tools/standup_sim.py routes each task with the tables parsed from STANDUP.md (nothing here is used for routing) and checks the result against these expectations.",
+  "tasks": [
+    {
+      "id": "research-workflow",
+      "runtime": "Claude Code CLI",
+      "task": "build a multi-step research workflow",
+      "expect_profile": "models/coding-cli-agent.md",
+      "expect_skills": ["prompt-chaining", "planning"],
+      "forbid_skills": ["rag", "exploration-discovery", "human-in-the-loop"]
+    },
+    {
+      "id": "guardrails-tool-bot",
+      "runtime": "Codex",
+      "task": "add guardrails to a tool-using bot",
+      "expect_profile": "models/coding-cli-agent.md",
+      "expect_skills": ["guardrails", "tool-use"],
+      "forbid_skills": ["rag", "mcp"]
+    },
+    {
+      "id": "failed-tool-call",
+      "runtime": "Grok 4.6 executor",
+      "task": "recover from a failed tool call",
+      "expect_profile": "models/grok-4-6.md",
+      "expect_skills": ["exception-handling", "tool-use"],
+      "forbid_skills": ["human-in-the-loop", "routing"]
+    },
+    {
+      "id": "private-docs-qa",
+      "runtime": "unknown",
+      "task": "answer questions over a private document set",
+      "expect_profile": "models/desktop-assistant-agent.md",
+      "expect_skills": ["rag"],
+      "forbid_skills": ["multi-agent", "a2a", "tool-use"],
+      "negative": true
+    },
+    {
+      "id": "email-on-my-behalf",
+      "runtime": "Muse personal agent",
+      "task": "a personal assistant about to send an email on my behalf",
+      "expect_profile": "models/muse.md",
+      "expect_skills": ["human-in-the-loop", "guardrails"],
+      "forbid_skills": ["planning", "multi-agent"],
+      "must_trigger_hitl": true
+    },
+    {
+      "id": "unrelated-edit",
+      "runtime": "Cursor agent",
+      "task": "rename a variable in one file",
+      "expect_profile": "models/coding-cli-agent.md",
+      "expect_skills": [],
+      "forbid_skills": [],
+      "negative": true
+    }
+  ]
+}

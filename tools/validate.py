@@ -12,6 +12,13 @@ companions, that examples run offline, and that AGENTS.md + manifest.json +
 any two same-role SKILL.md files + one references/patterns.md stays < 3000
 tokens for every role pair (the Step 7 gate).
 
+Stand-up path: STANDUP.md is linked from AGENTS.md; every profile it names
+exists; its routing table lists each manifest skill id exactly once with the
+manifest roles; relative links and repo paths in AGENTS.md, STANDUP.md and
+models/ resolve; every deep-dive code block carries a Provenance line; the
+worst-case stand-up load fits the STANDUP budget; and the fixtures in
+tests/fixtures/standup_tasks.json pass (tools/standup_sim.py).
+
 The Step 7 gate is an invariant, not a description of the current result.
 Do not raise BUDGET to make a failure pass; trim AGENTS.md, manifest.json or
 the heaviest cards instead (history: validation/audit/02-evidence-map.md and
@@ -177,14 +184,69 @@ for role in ROLES:
         table_ok = False
         print(f"      role {role}: AGENTS.md={sorted(listed)} manifest={sorted(expected)}")
 check("AGENTS.md role table matches manifest roles", table_ok)
-for kw in ("manifest.json", "Do not load the entire PDF", "Do not load all skills", "models/"):
+for kw in ("manifest.json", "Do not load the entire PDF", "Do not load all skills", "models/", "STANDUP.md"):
     check(f"AGENTS.md contains '{kw}'", kw in agents)
 
+# --- stand-up path --------------------------------------------------------
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import standup_sim  # noqa: E402
+
+check("STANDUP.md exists", os.path.exists(os.path.join(ROOT, "STANDUP.md")))
+check("AGENTS.md links STANDUP.md in its first 6 lines",
+      "](STANDUP.md)" in "\n".join(agents.splitlines()[:6]))
+std = standup_sim.parse_standup()
+std_profiles = sorted({p for _, p in std["profiles"]})
+check("STANDUP.md has a fallback (*) profile row", any("*" in sig for sig, _ in std["profiles"]))
+
 # --- models ---------------------------------------------------------------
-for m in ("fable-5-1", "grok-4-6", "muse"):
-    p = f"models/{m}.md"
+for p in sorted(set(std_profiles) | {f"models/{m}.md" for m in ("fable-5-1", "grok-4-6", "muse")}):
     n = read(p).count("\n") if os.path.exists(os.path.join(ROOT, p)) else 0
-    check(f"models/{m}.md exists, 30-50 lines", 30 <= n <= 50, f"{n} lines")
+    check(f"{p} exists, 30-50 lines" + (" (named in STANDUP.md)" if p in std_profiles else ""),
+          30 <= n <= 50, f"{n} lines")
+
+route_ids = [r["id"] for r in std["routes"]]
+role_bad = [r["id"] for r in std["routes"] if r["id"] in ids
+            and r["role"] != next(s["role"] for s in skills if s["id"] == r["id"])]
+check("STANDUP routing table lists every manifest skill id exactly once, nothing else",
+      sorted(route_ids) == sorted(ids), f"unknown={sorted(set(route_ids) - set(ids))} "
+      f"missing={sorted(set(ids) - set(route_ids))}")
+check("STANDUP routing table roles match manifest", not role_bad, ", ".join(role_bad))
+check("STANDUP routing rows each have signals", all(r["signals"] for r in std["routes"]))
+
+link_bad = []
+for doc in ["AGENTS.md", "STANDUP.md"] + sorted(os.path.relpath(p, ROOT) for p in glob.glob(os.path.join(ROOT, "models", "*.md"))):
+    text = read(doc)
+    targets = re.findall(r"\]\(([^)\s#]+)", text)
+    targets += [t for t in re.findall(r"`([A-Za-z0-9_./-]+\.(?:md|json|py))`", text) if "/" in t or t[0].isupper()]
+    for t in targets:
+        if t.startswith(("http://", "https://", "mailto:")) or "<" in t or "*" in t:
+            continue
+        if t.startswith(("references/", "examples/")):
+            if not all(os.path.exists(os.path.join(ROOT, "skills", i, t)) for i in ids):
+                link_bad.append(f"{doc}: {t} (missing in some skills/<id>/)")
+            continue
+        if not os.path.exists(os.path.normpath(os.path.join(ROOT, os.path.dirname(doc), t))) \
+                and not os.path.exists(os.path.join(ROOT, t)):
+            link_bad.append(f"{doc}: {t}")
+check("links and repo paths in AGENTS.md, STANDUP.md, models/ resolve", not link_bad, "; ".join(link_bad))
+
+prov_bad = []
+for p in sorted(glob.glob(os.path.join(ROOT, "skills", "*", "references", "deep-dive.md"))):
+    lines, fence = read(os.path.relpath(p, ROOT)).split("\n"), None
+    for i, ln in enumerate(lines):
+        m = re.match(r"^(```|~~~)", ln)
+        if fence is None and m:
+            fence = m.group(1)
+            para = []
+            for prev in reversed(lines[max(0, i - 4):i]):
+                if not prev.strip():
+                    break
+                para.append(prev)
+            if not any(x.startswith("Provenance: ") for x in para):
+                prov_bad.append(f"{os.path.relpath(p, ROOT)}:{i + 1}")
+        elif fence and ln.strip() == fence:
+            fence = None
+check("every deep-dive code block has a Provenance: line", not prov_bad, ", ".join(prov_bad[:8]))
 
 # --- notebook companions --------------------------------------------------
 nbs = sorted(glob.glob(os.path.join(ROOT, "chapter_notebooks", "Chapter_*.ipynb")))
@@ -210,6 +272,20 @@ diff = subprocess.run(["git", "diff", "--name-status", "origin/main", "HEAD", "-
 touched = [l for l in diff.splitlines()
            if not l.startswith("A") and (".ipynb" in l or ".pdf" in l)]
 check("PDF and notebooks unmodified vs origin/main", not touched, "; ".join(touched))
+
+# --- stand-up simulation --------------------------------------------------
+print(f"\n=== Stand-up simulation (cl100k_base tokens, STANDUP budget {std['budget']}) ===")
+su_base = sum(standup_sim.tokens(f) for f in ("AGENTS.md", "STANDUP.md", "manifest.json"))
+su_prof = max((standup_sim.tokens(p), p) for p in std_profiles)
+su_top = sorted(full_tok.values(), reverse=True)[:standup_sim.MAX_SKILLS]
+su_worst = su_base + su_prof[0] + sum(su_top)
+print(f"worst case: base {su_base} + {su_prof[1]} {su_prof[0]} + {standup_sim.MAX_SKILLS} heaviest SKILL.md "
+      f"{sum(su_top)} = {su_worst}")
+check(f"stand-up worst case <= STANDUP budget {std['budget']}", su_worst <= std["budget"], f"{su_worst} tokens")
+for r in standup_sim.simulate():
+    print(f"  {r['id']:20} profile={os.path.basename(r['profile'])} skills={r['skills']} tokens={r['tokens']}"
+          + (f" hitl={r['hitl']['statuses']}" if r["hitl"] else ""))
+    check(f"fixture {r['id']}", r["pass"], "; ".join(r["fails"]))
 
 # --- Step 7: low-token agent simulation -----------------------------------
 print(f"\n=== Low-token agent simulation (cl100k_base tokens, budget {BUDGET}) ===")
