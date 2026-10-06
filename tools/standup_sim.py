@@ -12,7 +12,8 @@ human-in-the-loop example gate on a send_email action and asserts it never
 executes without APPROVE. Whether a real bot follows these rules is untested.
 
 Usage: python3 tools/standup_sim.py [--json]
-Exit code 0 when every fixture passes. Needs stdlib + tiktoken.
+Exit code 0 when every fixture passes, 1 on a failure, 2 when blocked
+(tiktoken missing). Needs stdlib + tiktoken.
 """
 import importlib.util
 import json
@@ -20,7 +21,10 @@ import os
 import re
 import sys
 
-import tiktoken
+try:
+    import tiktoken
+except ImportError:          # reported by callers as BLOCKED, never as a pass
+    tiktoken = None
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AGENTS = os.path.join(ROOT, "AGENTS.md")
@@ -29,10 +33,12 @@ BOOT_FILES = ["AGENTS.md", "skills/INDEX.md"]
 FIXTURES = os.path.join(ROOT, "tests", "fixtures", "standup_tasks.json")
 MAX_SKILLS = 3
 SUFFIX = r"(?:s|es|d|ed|ing)?"
-ENC = tiktoken.get_encoding("cl100k_base")
+ENC = tiktoken.get_encoding("cl100k_base") if tiktoken else None
 
 
 def tokens(rel):
+    if ENC is None:
+        raise RuntimeError("tiktoken not installed (pip install tiktoken); token counts unknown")
     with open(os.path.join(ROOT, rel), encoding="utf-8") as f:
         return len(ENC.encode(f.read()))
 
@@ -155,7 +161,11 @@ def simulate(fixtures_path=FIXTURES):
 
 
 def main():
-    results = simulate()
+    try:
+        results = simulate()
+    except RuntimeError as e:
+        print(f"BLOCKED  {e}")
+        return 2
     if "--json" in sys.argv:
         print(json.dumps(results, indent=1))
     else:

@@ -44,10 +44,12 @@ Verified here means a file, command, or test in this repository was inspected or
 │   └── examples/minimal.py    # offline stub; the examples that actually run here
 ├── models/                    # runtime profiles (Fable 5.1, Grok 4.6, Muse, coding CLI, desktop assistant)
 ├── chapter_notebooks/         # book-related notebooks and generated .SKILL.md copies
-├── tools/validate.py          # skill-library checks; requires tiktoken
+├── tools/validate.py          # PASS/FAIL/BLOCKED checks + fixtures; requires tiktoken
+├── tools/validator_fixtures.py # runs the mutation fixtures in temp copies
+├── tools/offline.py           # runs a script with network access refused
 ├── tools/standup_sim.py       # deterministic routing-table test of the boot path on tests/fixtures/standup_tasks.json
 ├── tools/provenance_scan.py   # where each skill code line comes from (book, notebook, none)
-├── tests/fixtures/            # stand-up task fixtures
+├── tests/fixtures/            # routing fixtures + validator mutation fixtures
 └── validation/                # audit/ evidence pass; skill-reaudit/ per-skill fixes
 ```
 
@@ -71,6 +73,8 @@ python3 tools/validate.py
 ```
 
 On 2026-09-23 that command failed the two 3,000-token simulation checks (3,006 and 3,014). Card trims on this branch fixed them without raising the budget; see `validation/skill-reaudit/LOG.md`. `python3 tools/standup_sim.py` runs only the stand-up fixtures. It is a deterministic test of the routing tables, not of real agent behaviour. `tiktoken` is the validator's dependency. It is not declared in a requirements file because this repository has no `requirements.txt`.
+
+Each check prints PASS, FAIL or BLOCKED with its evidence. Unknown counts as BLOCKED, never PASS: a missing `tiktoken`, a missing example, an example timeout, missing hash pins or a validator error give BLOCKED and a nonzero exit. Exit codes are 0 for all PASS, 1 for any FAIL, and 2 for BLOCKED without a FAIL. The run is offline (network calls are refused) and needs no git: the PDF and notebooks are checked against `validation/frozen-sha256.txt`. A check-only run must leave the tree unchanged. The same command runs the 17 mutation fixtures in `tests/fixtures/validator_cases.json`, which cover expected PASS, FAIL and BLOCKED results.
 
 `python3 tools/validate.py --sync` rewrites `token_cost_estimate` values, the `chapter_notebooks/Chapter_*.SKILL.md` copies, `skills/INDEX.md`, `ground-truth/INDEX.md` and the `.agents/skills` symlinks. Run it only when you intend to regenerate those files.
 
