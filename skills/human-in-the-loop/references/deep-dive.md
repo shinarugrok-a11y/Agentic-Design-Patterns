@@ -155,6 +155,6 @@ No reply = REJECT.
 ## Failure modes in depth (DERIVED)
 - **Escalating everything** — gate on an explicit risk score plus reversibility, and track escalation rate.
 - **Requests lacking context** — send summary, effects, rationale and open questions in one payload.
-- **Rubber-stamping under volume** — the book names lack of scalability as the main drawback; pre-filter, sample-audit the auto-approved tail.
+- **Rubber-stamping under volume** — the book names lack of scalability as the main drawback; pre-filter by policy, and sample-audit the low-risk items that policy lets through unreviewed. Never let volume turn a required approval into an automatic one.
 - **Sensitive data exposed to reviewers** — the chapter requires anonymization (GT:L7894); redact before building the review payload.
 - **Stub treated as a gate** — an escalation tool that returns success without a human is not HITL.
