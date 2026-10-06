@@ -3,7 +3,7 @@ name: human-in-the-loop
 description: Human confirmation at high stakes. Use for irreversible or ambiguous actions. Not for routine volume.
 role: [safety]
 chapter: 13
-token_cost_estimate: 208
+token_cost_estimate: 215
 chains_with: [guardrails, exception-handling]
 ---
 
@@ -35,7 +35,7 @@ chains_with: [guardrails, exception-handling]
 ```python
 def escalate_to_human(issue_type: str) -> dict:
     return {"status": "pending_human", "issue": issue_type}
-# act only on explicit APPROVE; silence/timeout -> denied
+# act only on explicit APPROVE; silence/timeout -> denied (templates/gates.md G2)
 ```
 
 ## Next skills

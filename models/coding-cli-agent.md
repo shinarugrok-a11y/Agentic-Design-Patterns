@@ -8,7 +8,7 @@
 - Roles: `executor` by default; `planner` for multi-file changes.
 
 ## Skill budget
-- At most 3 SKILL.md per task (AGENTS.md boot step 4). Open `references/patterns.md`
+- At most 3 SKILL.md per task (AGENTS.md Pick step). Open `references/patterns.md`
   only for the skill you are implementing.
 - Open `references/deep-dive.md` only when writing framework code. Check its
   `Provenance:` labels before copying anything.
@@ -25,7 +25,7 @@ by task: tool-use, prompt-chaining, mcp, reflection, evaluation-monitoring
   one is missing. Never hardcode keys or write them to files.
 - Treat code marked DERIVED or ILLUSTRATIVE as ours. Only SOURCE blocks came
   from the book.
-- Ask before destructive commands (deleting files, force-pushing, dropping data).
+- Ask before destructive commands (deleting files, force-pushing, dropping data): gates G2–G3 in `templates/gates.md`.
 
 ## Should not
 - Load every skill or the PDF to "get context".

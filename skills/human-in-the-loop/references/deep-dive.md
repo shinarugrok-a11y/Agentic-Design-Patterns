@@ -95,7 +95,7 @@ tried) into state *before* escalation so the hand-off carries it.
 ## Escalation policy template
 Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
-Escalate to a human when ANY holds:
+Escalate to a human when ANY holds (policy: gate G2 in templates/gates.md):
 - action is irreversible (payment, deletion, external send): always, each time; no standing pre-approval
 - confidence < {threshold} or the request is ambiguous after one clarification
 - user expresses distress, legal threat, or requests a human

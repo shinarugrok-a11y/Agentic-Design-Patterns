@@ -28,9 +28,23 @@ Status as of the latest commit on this branch; a commit named only by subject is
 | G11 behavioural stand-up test | OPEN | `8a14d56` adds a deterministic routing-table test only |
 | G12 LICENSE | OWNER-DECISION | — |
 | G13 validator honesty + fixtures | OPEN | — |
-| G14 one gate policy | OPEN (partial) | "Close blockers" unifies the irreversible-action rule in `models/grok-4-6.md` (dropped "unless the plan authorises"), `fable-5-1.md`, `muse.md` and the HITL deep-dive: a per-action human APPROVE, where a plan, standing pre-approval, silence or a timeout never counts. The single gates template is still to come |
+| G14 one gate policy | CLOSED (branch) | "Close blockers" unified the irreversible-action rule. "Gates template" adds `templates/gates.md` (G1 ship=NO until checklist, G2 per-action human APPROVE, G3 owner's machine, G4 secrets, G5 connectors, G6 reserved-ports placeholder, G7 no bypass), loaded at `AGENTS.md` boot step 3. Every `models/*.md` and the gate rules in the HITL, guardrails, tool-use and exploration deep-dives point at it; the validator checks the models. One ship checklist: `skills/ship-security-checklist` (`kind: operational`, `chapter: null`) |
 | G15 examples execute / fail open | CLOSED (branch) | (a) HITL `send_email` is held as `pending_human` (`9329676`, re-checked by the fixture); the APPROVE output now says "approver replied APPROVE", not "human approved". (b) MCP: `1a4d323` handles `-O`; "Close blockers" makes `tool_filter=[]` expose no tools (`None` means all), with a self-test. (c) Guardrails IDOR: blocks unless both ids are non-empty and equal, with self-tests for the missing, empty and mismatched cases; the deep-dive labels the book's fail-open check a defect, WEAK, at GT:L11607–L11611 |
 | G16 personal identifiers | OWNER-DECISION | Branch README email removed ("Close blockers"). Still open for the owner: Colab ids in 7 frozen notebooks, the email in PR #4's README, and both in git history |
+
+### Pepper items (UNVERIFIED input; anything built from it is DERIVED/operational)
+
+| Item | Status | By / note |
+| --- | --- | --- |
+| P1 one entry file, ordered boot steps, Done per step | CLOSED | "Route correction" (`AGENTS.md`) |
+| P2 intent-first SKILL.md, API detail in references | CLOSED for the 10 framework-bound cards | "Framework-neutral cards"; their `patterns.md` already held the API forms with "(book)" labels. Still OPEN: `a2a` (raw HTTP/JSON-RPC, arguably neutral) and `resource-aware-optimization` (model tier names) |
+| P3 gates/policy template | CLOSED | "Gates template" (`templates/gates.md`) |
+| P4 connectors as needs + `.env.example` | CLOSED | `templates/connectors.md`, `.env.example` (names only; validator checks values are empty) |
+| P5 routine templates (bounded cron, self-expiring watch) | CLOSED | `templates/routines.md` |
+| P6 validator honesty + PASS/FAIL fixtures | see G13 | — |
+| P7 identity/profile + memory-seed templates | CLOSED | `templates/profile.md`, `templates/memory-seed.md`, placeholders only |
+| One ship-security checklist + teacher review | CLOSED | `skills/ship-security-checklist` (review rubric folded in); manifest gains `kind`, validator accepts `chapter: null` for operational skills only |
+| Codex as MCP server | Not used | see `models/coding-cli-agent.md` |
 
 ### Owner decisions (recorded, not acted on)
 

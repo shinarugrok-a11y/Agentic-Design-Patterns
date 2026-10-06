@@ -110,7 +110,7 @@ mismatched cases (DERIVED).
 - Engineering: checkpoint/rollback, least privilege, deterministic checks
   wherever possible, CI evaluation of guardrails (`evaluation-monitoring`).
 
-## Checklist (DERIVED)
+## Checklist (DERIVED; gate policy in `templates/gates.md`, pre-ship items in `ship-security-checklist`)
 - Fail closed on parse errors for high-risk actions; fail open only for low-risk chat.
 - Log every block with the triggered policy for tuning.
 - Re-screen *outputs*, not just inputs.

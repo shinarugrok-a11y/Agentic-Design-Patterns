@@ -14,7 +14,7 @@ The book text states: "All my royalties are donated to Save the Children." That 
 | --- | --- | --- |
 | Book PDF | `Agentic_Design_Patterns_Complete.pdf` | Present. Poppler `pdfinfo` reports **458 pages**, letter size, producer PyPDF2, not encrypted. |
 | Text extract | `ground-truth/agentic_design_patterns.txt` | Present. A fresh `pdftotext -layout` (Poppler 24.02.0) matches 17,642 of 17,659 lines. The 17 differing lines are emoji wrap in four clusters. |
-| Skill library | `AGENTS.md`, `skills/`, `skills/INDEX.md`, `manifest.json`, `models/` | `python3 tools/validate.py` passes, including the 3,000-token simulation (worst pair 2,498, measured on `AGENTS.md` + `skills/INDEX.md`) and the stand-up fixtures (worst case 3,000 of 4,000). All 21 `examples/minimal.py` files exit 0 offline. Re-audit log: `validation/skill-reaudit/LOG.md`. |
+| Skill library | `AGENTS.md`, `skills/`, `skills/INDEX.md`, `manifest.json`, `models/` | `python3 tools/validate.py` passes, including the 3,000-token simulation (worst pair 2,846, measured on `AGENTS.md` + `skills/INDEX.md` + `templates/gates.md`) and the stand-up fixtures (worst case 3,374 of 4,000). All 21 `examples/minimal.py` files exit 0 offline. Re-audit log: `validation/skill-reaudit/LOG.md`. |
 | Chapter notebooks | `chapter_notebooks/` | 65 notebooks. Illustrative snippets and fragments. Seven appendix files are Google Drive placeholders. Dependencies are not pinned. |
 | Audit | `validation/audit/` | This evidence pass (2026-09-23). Independent of any Claude or Anthropic extraction. |
 
@@ -27,7 +27,9 @@ Verified here means a file, command, or test in this repository was inspected or
 ├── README.md
 ├── AGENTS.md                  # single agent entry point: boot steps, profile table, role table
 ├── GEMINI.md                  # one-line pointer to AGENTS.md for Gemini CLI
-├── manifest.json              # full record of the 21 skills (for tools)
+├── manifest.json              # full record of the 22 skills: 21 patterns (one per chapter) + 1 operational
+├── .env.example               # env-var names only, no values
+├── templates/                 # DERIVED operational templates: gates, connectors, profile, memory seed, routines
 ├── .agents/skills/<id>        # symlinks to skills/<id> for Codex skill discovery
 ├── Agentic_Design_Patterns_Complete.pdf   # book PDF (458 pages)
 ├── ground-truth/
@@ -94,6 +96,7 @@ GitHub Issues and Discussions are disabled on this repository (`has_issues: fals
 
 - **Authoritative book text.** `Agentic_Design_Patterns_Complete.pdf` and the pdftotext extract under `ground-truth/`. The acknowledgment names Antonio Gulli as the author, thanks Springer, and credits Marco Fago (code, diagrams, review) and Mahtab Syed (coding), among others.
 - **Derived skill library.** `skills/`, `manifest.json`, `AGENTS.md`, the generated indexes, and `models/` compress each chapter into an agent-loadable card and an offline stub. They are derived notes, not a second copy of the book.
+- **Operational additions.** `skills/ship-security-checklist/`, `templates/` and `.env.example` are DERIVED/operational: they do not come from the book, and they hold placeholders only.
 - **Notebook mirror.** `chapter_notebooks/*.ipynb` arrived with the original repository commits by Elias Albittar / Elias Al-bittar (contact details omitted here; see git history). Some cells carry `Copyright (c) 2025 Marco Fago` and point at a `LICENSE` file that is not in the tree. The book text itself also contains those copyright headers inside code listings.
 - **Generated duplicates.** `chapter_notebooks/Chapter_*.SKILL.md` copies of `skills/<id>/SKILL.md`, maintained by `tools/validate.py`.
 - **Audit record.** `validation/audit/` is the 2026-09-23 evidence pass: what was checked, what was corrected, and what is still uncertain.

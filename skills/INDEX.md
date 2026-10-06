@@ -2,7 +2,7 @@
 
 Generated from `manifest.json` by `python3 tools/validate.py --sync`; do not edit.
 
-Pick rule: lowercase the task. A signal matches as a whole word or phrase, plus an optional s, es, d, ed or ing. Every row with a match is a candidate: safety rows first in table order, then the rest by most matches, then table order. Load at most 3 `skills/<id>/SKILL.md`; none if nothing matches. Load a `chains_with` skill only when its "Next skills" condition holds.
+Pick rule: lowercase the task; a signal matches as a whole word or phrase (+ s, es, d, ed, ing). Safety rows that match come first, then others by most matches, then table order. Load at most 3 `skills/<id>/SKILL.md`, none if nothing matches.
 
 | id | role | use when | signals |
 |---|---|---|---|
@@ -27,3 +27,4 @@ Pick rule: lowercase the task. A signal matches as a whole word or phrase, plus 
 | evaluation-monitoring | critic | Score accuracy, latency, cost with rubrics. | evaluate, evaluation, metric, benchmark, monitor, drift, accuracy |
 | prioritization | planner | Rank tasks by urgency, importance, deps, cost. | prioritize, prioritise, priority, rank tasks, urgent, backlog |
 | exploration-discovery | planner, critic | Generate, review, rank, evolve hypotheses. | hypothesis, hypotheses, discover, novel idea, open-ended, scientific research |
+| ship-security-checklist | safety | Before a PR, release, deploy or handing over a pack. | ship, release, deploy, open a pr, pull request, merge, pre-merge, security review, checklist, hand over |
