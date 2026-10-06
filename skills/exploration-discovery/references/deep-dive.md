@@ -2,14 +2,17 @@
 
 Source: Chapter 21 + `Chapter_21_Exploration_Discovery_(Agent_Laboratory).ipynb`
 (excerpts from github.com/SamuelSchmidgall/AgentLaboratory).
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Rule of thumb (book)
+## Rule of thumb (SOURCE, GT:L13519)
 Use in open-ended, complex or rapidly evolving domains where the solution
 space is not fully defined: scientific research, market analysis, security
 vulnerability discovery, creative generation, personalised education. The
 goal is to surface "unknown unknowns", not optimise a known process.
 
-## Google Co-Scientist architecture (book)
+## Google Co-Scientist architecture (SOURCE, GT:L13082–L13177)
 Supervisor coordinates asynchronous specialised agents:
 - **Generation**: initial hypotheses via literature exploration and simulated debate.
 - **Reflection**: peer-review for correctness, novelty, quality.
@@ -20,13 +23,14 @@ Supervisor coordinates asynchronous specialised agents:
 Validated in drug repurposing (AML), liver-fibrosis targets and bacterial
 gene-transfer mechanisms, with human scientists confirming hypotheses.
 
-## Agent Laboratory roles (notebook)
+## Agent Laboratory roles (SOURCE, GT:L13199–L13500)
 Phases: literature review -> plan formulation -> data preparation ->
 experimentation -> results interpretation -> report writing -> review.
 Roles: PhD student, Postdoc, ML engineer, Software engineer, Professor,
 Reviewers. Agents talk through dialogue; one directs, one executes.
 
 ### Reviewer ensemble with distinct personas
+Provenance: SOURCE (abridged) — condensed from GT:L13255–L13276; not verbatim.
 ```python
 class ReviewersAgent:
     def inference(self, plan, report):
@@ -36,8 +40,9 @@ class ReviewersAgent:
         return "\n".join(f"Reviewer #{i}:\n{get_score(outlined_plan=plan, latex=report, reward_model_llm=self.model, reviewer_type=r)}"
                          for i, r in enumerate([reviewer_1, reviewer_2, reviewer_3], 1))
 ```
-### Structured review template (from Sakana AI Scientist)
-```
+### Structured review template ("inherited from the AI Scientist", Sakana AI — notebook cell 0 comment)
+Provenance: SOURCE (abridged) — condensed from GT:L13303–L13362 (`template_instructions` in `get_score`); not verbatim.
+~~~
 Respond in the following format:
 
 THOUGHT:
@@ -58,10 +63,11 @@ In <JSON>, provide the review with fields in order:
 - "Confidence": 1-5
 - "Decision": "Accept" or "Reject" only.
 This JSON will be automatically parsed, so ensure the format is precise.
-```
+~~~
 `get_score` retries parsing up to `attempts=3`.
 
 ### Role prompts (director / executor pairs)
+Provenance: SOURCE (abridged) — condensed from GT:L13460–L13490; not verbatim.
 ```
 "You are a machine learning engineer being directed by a PhD student who will help you write the code,
 and you can interact with them through dialogue. Your goal is to produce code that prepares the data for
@@ -72,6 +78,7 @@ will be writing the code, and you can interact with them through dialogue. Your 
 engineer produce code that prepares the data for the provided experiment..."
 ```
 ### Phase-scoped context (PostdocAgent)
+Provenance: SOURCE (abridged) — condensed from GT:L13413–L13442; not verbatim.
 ```python
 def context(self, phase):
     sr_str = (f"Previous Experiment code: {self.prev_results_code}\nPrevious Results: {self.prev_exp_results}\n"
@@ -88,11 +95,13 @@ Each agent receives only the artifacts relevant to its phase; second rounds
 prepend prior results and reviewer feedback.
 
 ### Professor: final artifact
+Provenance: SOURCE — `sys_prompt` from GT:L13384–L13388 (`generate_readme`), joined onto one line.
 ```python
 sys_prompt = f"You are {self.role_description()} \n Here is the written paper \n{self.report}. Task instructions: Your goal is to integrate all of the knowledge, code, reports, and notes provided to you and generate a readme.md for a github repository."
 ```
 
 ## Generic discovery loop
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 hypotheses = generate(question, k)
 loop rounds:
@@ -103,13 +112,13 @@ loop rounds:
 report(top(ranked))
 ```
 
-## Checklist
+## Checklist (DERIVED)
 - Diverse reviewer personas and models; check for groupthink.
 - Separate "novel" from "correct" scores; both required to advance.
 - Hard round/budget caps; log every hypothesis lineage.
 - Safety/ethics gate before any experiment executes (`guardrails`, `human-in-the-loop`).
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Generate–debate–evolve loop** — a bounded cycle of generation, critique, ranking, and refinement; the core loop of Google's AI co-scientist.
 - **Role-specialized agents** — Generation, Reflection (peer review), Ranking, Evolution, Proximity (clusters similar ideas), and Meta-review (synthesizes recurring review patterns), under an async Supervisor.
 - **Elo tournament ranking** — hypotheses compete pairwise in simulated debates; Elo gives a score comparable across rounds and a plateau to stop on.
@@ -121,6 +130,7 @@ report(top(ranked))
 ## More prompt templates
 Reviewer persona plus the structured verdict format (`get_score`):
 
+Provenance: DERIVED — our paraphrase of GT:L13255–L13276 and GT:L13303–L13362.
 ```
 You are a harsh but fair reviewer who expects experiments that yield real
 insight for the research topic.
@@ -142,7 +152,7 @@ automatically, so the format must be exact.
 - **Google AI co-scientist** — Gemini-backed agents under a supervisor, Elo tournaments, safety review of both the research goal and each hypothesis.
 - **LangChain / Google ADK** — not used in this chapter.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Unbounded search** — open-ended generation never terminates on its own; bound it with `max_steps`, a fixed number of rounds, an explicit compute budget, or an Elo plateau.
 - **Untested hypotheses** — plausible prose scores well and means nothing; close the loop with an experiment phase that runs code or a wet-lab test, as the co-scientist's AML and liver-fibrosis results did.
 - **Generator/reviewer collapse** — one critic carrying the generator's priors approves its own blind spots; use several distinct reviewer personas (ideally a different model), plus a meta-review to surface recurring weaknesses.

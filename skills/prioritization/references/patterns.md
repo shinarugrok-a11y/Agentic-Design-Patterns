@@ -9,12 +9,13 @@
 ## Prompt template
 ```
 You are a project manager. Use tools in order: create_new_task first to get an id,
-then assign_priority(task_id, P0|P1|P2), then list_tasks.
+then assign_priority_to_task(task_id, P0|P1|P2), then list_all_tasks.
 Priority: P0 blocks others or is due today; P1 due this week; P2 otherwise.
 ```
 
 ## Key APIs
-- LangChain ReAct agent with `create_new_task`, `assign_priority`, `list_tasks` tools.
+- LangChain ReAct (book): `create_new_task`, `assign_priority_to_task`, `list_all_tasks`.
+- The book only tags P0-P2; the formula below is DERIVED.
 - Formula: `3*urgency + 2*importance - cost + blocked_count`.
 - Keep the task store as a dict keyed by id.
 

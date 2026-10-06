@@ -17,7 +17,7 @@ Stage 2: Transform the following specifications into a JSON object with
 
 ## Key APIs
 - LangChain LCEL: `prompt | llm | StrOutputParser()`; `{"specifications": chain1} | chain2`.
-- `llm.with_structured_output(PydanticModel)` for typed handoffs.
+- Typed handoffs: validate JSON with a schema (not a book API).
 - ADK: `SequentialAgent(sub_agents=[...])`, each with `output_key`, read via `{key}`.
 
 ## Pitfalls -> fixes

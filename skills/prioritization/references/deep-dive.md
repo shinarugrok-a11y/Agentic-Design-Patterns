@@ -1,14 +1,17 @@
 # Prioritization — deep dive
 
 Source: Chapter 20 + `Chapter_20_Prioritization_(SuperSimplePM).ipynb`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Criteria (book)
+## Criteria (SOURCE, GT:L12624–L12690, L13000–L13004)
 Urgency, importance, dependencies, resource cost, expected value/benefit,
 user preferences, alignment with strategic goals. Prioritisation happens at
 several levels: strategic objectives, tactical steps, immediate actions.
 Dynamic re-prioritisation adjusts focus as conditions change.
 
-Rule of thumb: an agent must autonomously manage multiple, possibly
+Rule of thumb (GT:L12984): an agent must autonomously manage multiple, possibly
 conflicting tasks or goals under resource constraints in a dynamic setting.
 Examples: support triage (outage > password reset; high-value customers),
 cloud scheduling (critical apps at peak, batch off-peak), driving safety
@@ -16,7 +19,11 @@ cloud scheduling (critical apps at peak, batch off-peak), driving safety
 severity, personal assistants.
 
 ## Notebook: Project Manager agent (LangChain ReAct)
+Weakness (DERIVED): the book example only tags tasks P0/P1/P2 from wording;
+it never sorts, compares or re-prioritises tasks. Scoring and re-ranking
+below are ours.
 ### Data + manager
+Provenance: SOURCE (abridged) — condensed from GT:L12726–L12754; not verbatim.
 ```python
 class Task(BaseModel):
     id: str
@@ -37,6 +44,7 @@ class SuperSimpleTaskManager:
     def list_all_tasks(self) -> str: ...
 ```
 ### Tools with Pydantic arg schemas
+Provenance: SOURCE — lines found verbatim in GT:L12791–L12849, `Chapter_20_Prioritization_(SuperSimplePM).ipynb`.
 ```python
 class PriorityArgs(BaseModel):
     task_id: str = Field(description="The ID of the task to update, e.g., 'TASK-001'.")
@@ -56,6 +64,7 @@ pm_tools = [
 ]
 ```
 ### System prompt (the prioritisation policy)
+Provenance: SOURCE — lines found verbatim in GT:L12860–L12878.
 ```
 You are a focused Project Manager LLM agent. Your goal is to manage project tasks efficiently.
 
@@ -71,6 +80,7 @@ Available workers: 'Worker A', 'Worker B', 'Review Team'
 Priority levels: P0 (highest), P1 (medium), P2 (lowest)
 ```
 ### Executor
+Provenance: SOURCE (abridged) — condensed from GT:L12887–L12906, `Chapter_20_Prioritization_(SuperSimplePM).ipynb`; not verbatim.
 ```python
 pm_agent = create_react_agent(llm, pm_tools, pm_prompt_template)   # prompt has {chat_history}, {input}, {agent_scratchpad}
 pm_agent_executor = AgentExecutor(agent=pm_agent, tools=pm_tools, verbose=True, handle_parsing_errors=True,
@@ -80,6 +90,7 @@ await pm_agent_executor.ainvoke({"input": "Manage a new task: Review marketing w
 ```
 
 ## Scoring formula (for many tasks)
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 score = w_u * urgency + w_i * importance + w_v * value - w_c * cost
 subject to: dependencies satisfied; capacity per worker; hard deadlines first
@@ -88,6 +99,7 @@ Re-score on every new event (new task, failure, deadline change) and keep
 a stable tie-break (creation order) to avoid thrashing.
 
 ## Ranking prompt template
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 Tasks: {json list with id, description, deadline, deps, est_cost}
 Criteria (in order): safety/urgency, hard deadlines, blocking dependencies,
@@ -95,13 +107,13 @@ business value, cost. Return JSON: [{"id":..., "priority": "P0|P1|P2", "reason":
 Never assign P0 to more than {n} tasks.
 ```
 
-## Checklist
+## Checklist (DERIVED)
 - Validate priority values inside the tool, not only in the prompt.
 - Create before prioritise (ids first).
 - Explicit defaults for missing info.
 - Bound P0 count; re-rank on change; log rationale.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Criteria scoring** — weight urgency, importance, dependencies, resource availability, and cost/benefit into one number; reproducible and auditable.
 - **Priority tiers** — map language ("urgent", "ASAP", "critical") onto a fixed ladder such as P0/P1/P2, with a stated default (P1) when the request says nothing.
 - **LLM-as-ranker** — the model reads the request and applies the criteria in its instruction; use when criteria are fuzzy or user-stated, not when the ranking must be reproducible.
@@ -112,6 +124,7 @@ Never assign P0 to more than {n} tasks.
 ## More prompt templates
 Project-manager agent instruction (from the chapter's `pm_prompt_template` system message):
 
+Provenance: DERIVED — our paraphrase of GT:L12860–L12878.
 ```
 You are a focused Project Manager agent. When you receive a task request:
 1. Create the task with `create_new_task` first - you need the task_id.
@@ -131,7 +144,7 @@ State the tie-break and the default in the prompt; an unstated default is an inv
 - **LangChain** — `create_react_agent` + `AgentExecutor`, Pydantic `args_schema` per tool, `ConversationBufferMemory` so re-prioritization sees earlier decisions.
 - **Google ADK / CrewAI** — no prioritization example in this chapter; the same shape works as a ranking tool plus `session.state` for the queue.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Unstated weights** — an LLM ranking with no written criteria cannot be reproduced or reviewed; put the weights and the default tier in the instruction, and keep the scoring in a tool rather than in free text.
 - **Re-ranking thrash** — recomputing every tick makes the agent switch tasks mid-flight; re-prioritize only on events that change the inputs, and keep the current task unless the new top item beats it by a margin.
 - **Dependencies ignored** — a high-urgency item whose prerequisite is unfinished scores top and then stalls; build the ready set first (`depends_on` satisfied), then score only that set.

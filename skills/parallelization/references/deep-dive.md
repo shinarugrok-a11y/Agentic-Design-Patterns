@@ -2,14 +2,18 @@
 
 Source: Chapter 3 + `Chapter_03_Parallelization_(Google_ADK).ipynb`,
 `Chapter_03_Parallelization_(LangChain).ipynb`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Rule of thumb (book)
+## Rule of thumb (SOURCE, GT:L2342–L2345)
 Use when a workflow contains multiple independent operations that can run
 simultaneously: fetching from several APIs, processing chunks, generating
 several pieces of content for later synthesis. The book warns that
-concurrency adds real complexity to design, debugging and logging.
+concurrency adds real complexity to design, debugging and logging (GT:L2365–L2367).
 
 ## Pattern A: LangChain `RunnableParallel` + synthesis
+Provenance: SOURCE (abridged) — condensed from GT:L1977–L2038; not verbatim.
 ```python
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 
@@ -42,6 +46,7 @@ response = await full_parallel_chain.ainvoke("The history of space exploration")
 - Use `ainvoke` so branches actually overlap on I/O.
 
 ## Pattern B: ADK `ParallelAgent` inside a `SequentialAgent`
+Provenance: SOURCE (abridged) — condensed from GT:L2138–L2256; not verbatim.
 ```python
 researcher_agent_1 = LlmAgent(name="RenewableEnergyResearcher", model=GEMINI_MODEL,
     instruction="""You are an AI Research Assistant specializing in energy.
@@ -81,33 +86,34 @@ Mechanics:
 - `{state_key}` placeholders in the merger's instruction are filled from state.
 - `ParallelAgent` completes only when every sub-agent has finished (join).
 
-## Synthesis prompt guidance
+## Synthesis prompt guidance (DERIVED; mirrors the book's merger prompt, GT:L2210–L2240)
 Tell the merger explicitly to (1) attribute each finding to its branch,
 (2) use only the provided inputs, (3) follow a fixed output skeleton. Without
 (2) the merger will pad with training knowledge.
 
-## Operational concerns
+## Operational concerns (DERIVED)
 - Fan-out N calls hits provider rate limits; add a semaphore or batch size.
 - Partial failure: decide per-branch whether to fail the join or substitute
   a placeholder ("no result") and flag it for the synthesiser.
 - Trace/log each branch with its key; interleaved logs are unreadable otherwise.
-- ADK can also parallelise via LLM-driven delegation from a coordinator; explicit
-  `ParallelAgent` is more predictable.
+- ADK can also parallelise via LLM-driven delegation (book, GT:L2373, L2389);
+  that explicit `ParallelAgent` is more predictable is our view.
 
-## Combine with
+## Combine with (DERIVED)
 `prompt-chaining` (sequential before/after the fan-out), `routing` (decide
 which branches to run), `multi-agent` (branches are specialists).
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Map-then-synthesize** — fan out N prompts over the same input, then feed all branch outputs into one synthesis prompt; wins for multi-faceted analysis of a single topic.
 - **Multi-source gather** — each branch hits a different API, index, or database; wins when latency is dominated by I/O wait.
 - **Sectioning** — split one artifact into independent sections (or a batch into chunks) and generate each concurrently; wins for long content assembled from separable parts.
 - **Parallel sub-agents with a merger** — branches are full agents writing to shared state, followed by a dedicated synthesis agent; wins when branches need distinct tools or instructions.
-- **LLM-driven delegation** — a coordinator's LLM recognises that sub-tasks are independent and triggers them concurrently; wins when the fan-out set is not known statically.
+- **LLM-driven delegation** (SOURCE term, GT:L2373) — a coordinator's LLM recognises that sub-tasks are independent and triggers them concurrently; wins when the fan-out set is not known statically.
 
 ## More prompt templates
 Branch prompts stay narrow and fixed-format so the aggregator can rely on shape:
 
+Provenance: SOURCE — lines found verbatim in GT:L1977–L1999.
 ```text
 Summarize the following topic concisely:
 {topic}
@@ -121,6 +127,7 @@ Identify 5-10 key terms from the following topic, separated by commas:
 
 Aggregator prompt — name each branch and forbid outside knowledge:
 
+Provenance: SOURCE (abridged) — reworded from the book's `merger_agent` instruction, GT:L2213–L2231.
 ```text
 You are responsible for combining research findings into a structured report.
 Synthesize the following summaries, clearly attributing findings to their
@@ -135,11 +142,11 @@ knowledge or details not present in these summaries.
 *   Carbon Capture:    {carbon_capture_result}
 ```
 
-## Framework notes
+## Framework notes (SOURCE: `RunnableParallel` and `ParallelAgent` are the chapter's APIs; usage advice DERIVED)
 - **LangChain / LangGraph** — `RunnableParallel` (or a plain dict literal in LCEL) runs branches side by side; use `ainvoke`/`abatch` so the concurrency is real, and `asyncio.gather` directly when branches are not Runnables.
 - **Google ADK** — `ParallelAgent` joins only after every sub-agent finishes; branches communicate solely through `output_key` writes into `session.state`.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Hidden dependency between branches** — a branch silently relies on another's output and reads stale or empty state. Assert each branch's inputs come only from the shared input, and move any true dependency into a sequential step after the join.
 - **Rate limits from burst fan-out** — N simultaneous calls trip quota and return 429s. Cap concurrency with a semaphore or batch size and back off per branch rather than per request.
 - **Aggregator starved by one failure** — an unhandled branch exception aborts the join and the synthesis never runs. Use `asyncio.gather(..., return_exceptions=True)`, drop failed branches, and tell the aggregator which sources are missing.

@@ -2,8 +2,11 @@
 
 Source: Chapter 14 + `Chapter_14_Knowledge_Retrieval_(RAG_LangChain)`,
 `(RAG_Google_Search)`, `(RAG_VertexAI)`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Pipeline (book)
+## Pipeline (SOURCE, GT:L8187–L8270, L8327–L8394; rule GT:L8701)
 1. **Chunk** documents (size/overlap tuned to the content).
 2. **Embed** chunks; store in a vector DB (semantic search by meaning).
 3. **Retrieve** top-k chunks for the query (plus optional hybrid keyword search).
@@ -17,6 +20,7 @@ Benefits: fresh/private knowledge, fewer hallucinations, attributable
 answers. Costs: chunking quality, retrieval relevance, added latency.
 
 ## Notebook pattern: LangChain + Weaviate + LangGraph
+Provenance: SOURCE (abridged) — condensed from GT:L8530–L8648; not verbatim.
 ```python
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import Weaviate
@@ -69,6 +73,7 @@ The graph makes it easy to insert nodes later: query rewriting, relevance
 grading, web fallback (Agentic RAG).
 
 ## ADK options
+Provenance: SOURCE (abridged) — condensed from GT:L8458–L8511; not verbatim.
 ```python
 # Web grounding via search tool
 search_agent = Agent(name="research_assistant", model="gemini-2.0-flash-exp",
@@ -82,10 +87,11 @@ memory_service = VertexAiRagMemoryService(
     similarity_top_k=5,               # how many chunks to return
     vector_distance_threshold=0.7)    # filter weak matches
 
-# Enterprise datastore agent (see tool-use): agents.VSearchAgent(datastore_id=...)
+# Not Ch14: Vertex AI Search datastore agent is Ch5 (GT:L3616, see tool-use)
 ```
 
 ## Grounded-answer prompt template
+Provenance: DERIVED — ILLUSTRATIVE, not from the book (citations idea: GT:L8200).
 ```
 Answer ONLY from the context. If the context is insufficient, say "I don't know".
 Cite the chunk ids you used in [brackets].
@@ -95,7 +101,7 @@ Context:
 [2] {chunk_2}
 ```
 
-## Tuning knobs
+## Tuning knobs (DERIVED; re-ranker and query rewrite are not in Ch14)
 | Knob | Effect |
 |---|---|
 | chunk_size / overlap | too small loses context; too large dilutes relevance |
@@ -105,13 +111,13 @@ Context:
 | re-ranker | improves ordering of top-k |
 | query rewrite | handles vague or multi-part questions |
 
-## Failure diagnostics
+## Failure diagnostics (DERIVED)
 - Wrong answer but right chunk present -> prompt problem.
 - Right chunk absent -> chunking/embedding/top_k problem.
 - Confident answer with no chunks -> missing "I don't know" instruction.
 - Stale answers -> index not refreshed after document updates.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Standard RAG** — chunk, embed, vector-search top-k, append to prompt; the default when documents are independent.
 - **Hybrid retrieval** — fuse BM25 keyword ranking with vector search; wins when queries carry exact identifiers that embeddings blur.
 - **GraphRAG** — retrieve over a knowledge graph of entities and relations; wins on multi-hop questions needing facts stitched across documents, at higher maintenance cost.
@@ -119,6 +125,7 @@ Context:
 - **Search-tool grounding** — skip the index, give the agent a live search tool; open-web freshness, no corpus control.
 
 ## More prompt templates
+Provenance: SOURCE — lines found verbatim in GT:L8608–L8613.
 ```
 You are an assistant for question-answering tasks.
 Use the following pieces of retrieved context to answer the question.
@@ -129,6 +136,7 @@ Context: {context}
 Answer:
 ```
 
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 Sources with source name and date: {numbered_chunks}
 Before answering, name any sources that contradict each other and say which you
@@ -140,7 +148,7 @@ If the sources do not contain the answer, reply exactly: NOT IN CORPUS.
 - **LangChain / LangGraph** — `TextLoader` → `CharacterTextSplitter` → vector store → `as_retriever()`; making retrieve and generate `StateGraph` nodes is what enables re-retrieval loops.
 - **Google ADK** — `google_search` for live grounding; `VertexAiRagMemoryService` for a managed corpus.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Retrieval misses, model guesses** — top-k too small or query phrased unlike the corpus; raise k behind a distance threshold, add BM25, and make "NOT IN CORPUS" an allowed answer.
 - **Chunk size wrong** — small chunks lose the context that made them meaningful, large ones crowd the prompt with noise; chunk on structure (section, paragraph) with overlap, per the 500/50 default.
 - **Stale index** — a pre-processed corpus drifts from evolving wikis; schedule reconciliation and carry a date in chunk metadata so the model prefers the current policy over a 2020 blog post.

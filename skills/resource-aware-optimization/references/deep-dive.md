@@ -164,7 +164,7 @@ Respond ONLY with JSON like: { "classification": "simple" }
 ```
 
 Critic agent (the signal that keeps a cheap tier honest):
-Provenance: SOURCE (abridged) — shortened from GT:L9573–L9590.
+Provenance: DERIVED — our paraphrase of `CRITIC_SYSTEM_PROMPT`, GT:L9572–L9590 (book wording differs).
 ```
 You are the Critic Agent, the quality assurance arm of this system. Review the
 answering agent's output for factual correctness, thoroughness, and bias. Name

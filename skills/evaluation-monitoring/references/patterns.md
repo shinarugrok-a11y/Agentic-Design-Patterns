@@ -16,7 +16,7 @@ Answer: {ans}
 ```
 
 ## Key APIs
-- ADK: `adk eval` with `.evalset.json`; trajectory (tool call) matching.
+- ADK: `adk web` / pytest `AgentEvaluator.evaluate` / `adk eval` on test and evalset files.
 - LLM-as-judge: rubric prompt + JSON scores; calibrate on human labels.
 - Monitoring: log tokens, latency, tool errors per request.
 

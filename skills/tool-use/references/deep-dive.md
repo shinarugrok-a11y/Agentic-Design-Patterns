@@ -2,8 +2,11 @@
 
 Source: Chapter 5 + `Chapter_05_Tool_Use_(LangChain).ipynb`, `(CrewAI)`,
 `(Executing_Code)`, `(Google_Search)`, `(Vertex_AI_Search)`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Mechanics (book)
+## Mechanics (SOURCE, paraphrase of Ch 5 overview, GT:L2907–L2960)
 1. Tools are described to the model (name, description, typed parameters).
 2. The model decides a tool is needed and emits a structured call (JSON).
 3. An orchestration layer executes the call and returns the result.
@@ -14,6 +17,7 @@ knowledge: real-time data, private data, exact computation, code execution,
 or triggering actions.
 
 ## Pattern A: LangChain `@tool` + `create_tool_calling_agent`
+Provenance: SOURCE (abridged) — condensed from GT:L3059–L3126, `Chapter_05_Tool_Use_(LangChain).ipynb`; not verbatim.
 ```python
 from langchain_core.tools import tool
 from langchain.agents import create_tool_calling_agent, AgentExecutor
@@ -41,6 +45,7 @@ The docstring *is* the tool description the model reads; include example
 queries so the model knows when the tool applies.
 
 ## Pattern B: CrewAI tool that raises instead of returning error strings
+Provenance: SOURCE (abridged) — condensed from GT:L3198–L3284; not verbatim.
 ```python
 from crewai import Agent, Task, Crew
 from crewai.tools import tool
@@ -71,10 +76,12 @@ analyze_aapl_task = Task(
     agent=financial_analyst_agent)
 Crew(agents=[financial_analyst_agent], tasks=[analyze_aapl_task]).kickoff()
 ```
-Best practice from the notebook: return clean typed data, raise specific
-errors, and tell the task how to behave on both success and failure.
+From the book/notebook comments (GT:L3198–L3240, `Chapter_05_Tool_Use_(CrewAI).ipynb`): the tool
+"returns raw data (a float) or raises a standard Python error", and the task
+description says how to react to both success and failure.
 
 ## Pattern C: ADK built-in tools
+Provenance: SOURCE (abridged) — condensed from GT:L3362–L3595; not verbatim.
 ```python
 from google.adk.agents import LlmAgent, Agent
 from google.adk.tools import google_search
@@ -97,6 +104,7 @@ vsearch_agent = agents.VSearchAgent(name="q2_strategy_vsearch_agent", model="gem
     datastore_id=os.environ["DATASTORE_ID"], model_parameters={"temperature": 0.0})
 ```
 Inspecting code-execution events:
+Provenance: SOURCE (abridged) — condensed from GT:L3502–L3516 (prints and flags removed).
 ```python
 for part in event.content.parts:
     if part.executable_code:        print(part.executable_code.code)
@@ -104,9 +112,10 @@ for part in event.content.parts:
     elif part.text:                  print(part.text)
 ```
 `VSearchAgent` final events expose `event.grounding_metadata.grounding_attributions`
-for source citations.
+for source citations (GT:L3662–L3664).
 
 ## Runner boilerplate (ADK)
+Provenance: SOURCE (abridged) — combined from GT:L3392–L3400 (session + `Runner`) and GT:L3495–L3497 (`async for ... runner.run_async`).
 ```python
 session_service = InMemorySessionService()
 await session_service.create_session(app_name=APP, user_id=UID, session_id=SID)
@@ -117,14 +126,14 @@ async for event in runner.run_async(user_id=UID, session_id=SID,
 ```
 In notebooks use `nest_asyncio.apply()` before `asyncio.run`.
 
-## Tool design checklist
+## Tool design checklist (DERIVED)
 - One verb per tool; precise name; docstring with when-to-use examples.
 - Typed parameters; validate inside the tool.
 - Raise for unexpected failures; return structured dicts (`{"status": ..., ...}`) for expected outcomes.
 - Keep outputs small; summarise large payloads before returning.
 - Restrict dangerous tools (`before_tool_callback`, see `guardrails`).
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Function tool** — a plain typed function exposed with `@tool`; wins for one deterministic action with a clear schema.
 - **Pre-built tool** — framework-supplied `google_search`, `BuiltInCodeExecutor`, Vertex AI Search; wins when the integration is standard and not worth owning.
 - **Code execution as tool** — the model writes Python, a sandbox runs it; wins for exact arithmetic and ad-hoc data work no fixed schema covers.
@@ -133,26 +142,33 @@ In notebooks use `nest_asyncio.apply()` before `asyncio.run`.
 ## More prompt templates
 The docstring *is* the selection prompt — say what it returns and when to pick it:
 
+Provenance: SOURCE — docstring of `search_information`, GT:L3086–L3091, reflowed.
 ```
 Provides factual information on a given topic. Use this tool to find answers
-to questions like 'What is the capital of France?' or 'What is the weather
-in London?'. Returns the price as a float; raises ValueError if not found.
+to phrases like 'capital of France' or 'weather in London?'.
+```
+
+Provenance: SOURCE — docstring of the CrewAI `get_stock_price` tool, GT:L3227–L3230 / `Chapter_05_Tool_Use_(CrewAI).ipynb`.
+```
+Fetches the latest simulated stock price for a given stock ticker symbol.
+Returns the price as a float. Raises a ValueError if the ticker is not found.
 ```
 
 Tool-calling agents need a scratchpad slot for the call/result loop:
 
+Provenance: SOURCE (abridged) — `agent_prompt` messages from GT:L3124–L3128.
 ```
 system: You are a helpful assistant.
 human:  {input}
 placeholder: {agent_scratchpad}
 ```
 
-## Framework notes
+## Framework notes (APIs SOURCE as cited above; role descriptions DERIVED)
 - **LangChain / LangGraph** — `@tool` declares; `create_tool_calling_agent` binds llm+tools+prompt; `AgentExecutor` is the runtime that actually executes calls and feeds results back.
 - **Google ADK** — ships `google_search`, `BuiltInCodeExecutor`, and `VSearchAgent`; the `Runner` streams `executable_code` / `code_execution_result` / `grounding_metadata` parts.
 - **CrewAI** — `@tool("Name")` attaches per `Agent`; `Task.description` and `expected_output` tell it how to behave when the tool fails.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Vague tool descriptions cause wrong-tool selection** — the docstring is the model's only signal. Name the return type and include example queries the tool covers.
 - **Hallucinated or malformed arguments** — use few, flat, annotated parameters (`ticker: str -> float`) so schema validation rejects bad calls before the API is hit.
 - **Unvalidated side effects** — split read tools from write tools; gate irreversible calls behind explicit confirmation rather than tool-choice.

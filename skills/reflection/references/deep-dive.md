@@ -2,16 +2,20 @@
 
 Source: Chapter 4 + `Chapter_04_Reflection_(Iterative_Loop).ipynb`,
 `Chapter_04_Reflection_(LangChain).ipynb`, `Chapter_04_Reflection_(ADK).ipynb`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Key takeaways (book)
+## Key takeaways (SOURCE, GT:L2845–L2870)
 - Loop of execution -> evaluation/critique -> refinement.
 - Producer-Critic split (separate agent or prompted role) is more objective
   than self-reflection and yields structured feedback.
 - Costs: latency, tokens, context-window growth, API throttling.
-- Full iterative reflection wants stateful orchestration (LangGraph/ADK
-  loops); a single critique-refine step is expressible in plain LCEL.
+- Full iterative reflection often requires stateful workflows ("like
+  LangGraph"); a single reflection step can be done in LangChain LCEL.
 
 ## Pattern A: iterative loop with stop token (LangChain)
+Provenance: SOURCE (abridged) — condensed from GT:L2606–L2700; not verbatim.
 ```python
 llm = ChatOpenAI(model="gpt-4o", temperature=0.1)
 task_prompt = """Create a Python function `calculate_factorial` that:
@@ -43,6 +47,7 @@ Design points: explicit sentinel (`CODE_IS_PERFECT`), hard `max_iterations`,
 critic gets the *original task* plus the artifact, history carries critiques.
 
 ## Pattern B: single generate-critique-refine pass (LCEL)
+Provenance: SOURCE (abridged) — condensed from `Chapter_04_Reflection_(LangChain).ipynb`; notebook only, not in the book text; not verbatim.
 ```python
 generation_chain = ChatPromptTemplate.from_messages([
     ("system", "Write a short, simple product description for a new smart coffee mug."),
@@ -67,6 +72,7 @@ full_reflection_chain = (RunnablePassthrough.assign(initial_description=generati
 original input plus prior outputs.
 
 ## Pattern C: Producer-Critic with ADK `SequentialAgent`
+Provenance: SOURCE (abridged) — condensed from GT:L2741–L2770; not verbatim.
 ```python
 generator = LlmAgent(name="DraftWriter",
     instruction="Write a short, informative paragraph about the user's subject.",
@@ -81,10 +87,12 @@ reviewer = LlmAgent(name="FactChecker", instruction="""
     output_key="review_output")
 review_pipeline = SequentialAgent(name="WriteAndReview_Pipeline", sub_agents=[generator, reviewer])
 ```
-Add a refinement agent that reads `review_output` and `draft_text`, and wrap
+DERIVED: add a refinement agent that reads `review_output` and `draft_text`, and wrap
 in `LoopAgent` (see `multi-agent`) with an escalate-on-ACCURATE checker to iterate.
+The book only says a `LoopAgent` version "is also available" (GT:L2796–L2797) and does not show it.
 
 ## Critic prompt template
+Provenance: DERIVED — ILLUSTRATIVE, not from the book.
 ```
 You are a {domain} reviewer. Evaluate the ARTIFACT against the REQUIREMENTS.
 Report: (a) requirement violations, (b) bugs/errors, (c) concrete fixes.
@@ -93,13 +101,13 @@ REQUIREMENTS: {task}
 ARTIFACT: {artifact}
 ```
 
-## Guardrails for the loop
+## Guardrails for the loop (DERIVED)
 - Cap iterations (2-3 is usually enough).
 - Detect non-progress: identical artifact twice -> stop.
 - Trim history or summarise critiques to avoid context overflow.
 - Prefer a different model (or temperature) for the critic to reduce shared bias.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Single-pass generate-critique-refine** — one fixed round of draft, critique, rewrite; wins when quality matters but the cost ceiling is a known 3 calls.
 - **Iterative loop with stop phrase** — repeat until the critic emits a sentinel (`CODE_IS_PERFECT`) or `max_iterations` is hit; wins for code and long-form text that converge over rounds.
 - **Producer-Critic (separate agents)** — a distinct critic agent with its own role and rubric judges the producer's output; wins on high-stakes or specialist evaluation where self-review is too lenient.
@@ -109,6 +117,7 @@ ARTIFACT: {artifact}
 ## More prompt templates
 Critic with an explicit stop phrase:
 
+Provenance: SOURCE (abridged) — reflector prompt from GT:L2673–L2685, reflowed.
 ```text
 You are a senior software engineer and an expert in Python. Perform a
 meticulous code review. Critically evaluate the provided code against the
@@ -127,6 +136,7 @@ Code to Review:
 
 Critic with a machine-readable verdict:
 
+Provenance: SOURCE (abridged) — reviewer instruction from GT:L2755–L2762, reflowed.
 ```text
 You are a meticulous fact-checker.
 1. Read the text provided in the state key 'draft_text'.
@@ -136,11 +146,11 @@ You are a meticulous fact-checker.
    - "reasoning": a clear explanation, citing specific issues if any.
 ```
 
-## Framework notes
+## Framework notes (SOURCE, GT:L2863–L2868; detail DERIVED)
 - **LangChain / LangGraph** — LCEL expresses one reflection step via chained `RunnablePassthrough.assign`; true iteration needs a stateful graph (LangGraph) or an explicit Python loop.
 - **Google ADK** — `SequentialAgent` runs producer then critic, passing the draft through `session.state` keys set by each agent's `output_key`.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Non-convergence** — the critic always finds something, so the loop runs forever. Always pair a `max_iterations` cap with an explicit stop sentinel, and return the best draft when the cap is reached.
 - **Self-critique rubber-stamping** — the same model that wrote the draft shares its blind spots and approves its own errors. Use a separate critic agent with its own role prompt and rubric, or a tool-based oracle such as tests.
 - **Context overflow** — appending every draft and critique to `message_history` grows the prompt each round until it is truncated or throttled. Keep only the latest draft plus the current critique, or summarize prior rounds.

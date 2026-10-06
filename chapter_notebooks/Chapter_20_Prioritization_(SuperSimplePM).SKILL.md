@@ -3,7 +3,7 @@ name: prioritization
 description: Rank tasks by urgency, importance, dependencies, cost. Use with competing tasks. Not for one task or fixed order.
 role: [planner]
 chapter: 20
-token_cost_estimate: 200
+token_cost_estimate: 201
 chains_with: [planning, goal-setting]
 ---
 
@@ -35,7 +35,7 @@ chains_with: [planning, goal-setting]
 ```python
 def score(t): return 3*t.urgency + 2*t.importance - t.cost + t.blocks
 ordered = sorted(tasks, key=score, reverse=True)
-# LLM variant: create_new_task -> assign_priority -> list_tasks
+# book: create_new_task -> assign_priority_to_task -> list_all_tasks
 ```
 
 ## Next skills

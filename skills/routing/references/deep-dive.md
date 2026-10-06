@@ -113,7 +113,7 @@ Request: {request}
 - No fallback route; unknown intents raise or loop.
 - Routing on a long, expensive model when a small classifier suffices.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **LLM-based routing** (SOURCE, GT:L1237) — a prompt classifies the query and emits one route id.
 - **Embedding-based routing** (SOURCE, GT:L1244) — embed the query, compare to per-route embeddings.
 - **Rule-based routing** (SOURCE, GT:L1250) — if/else over keywords, patterns or structured fields; fast and deterministic, brittle on unseen inputs.

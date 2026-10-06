@@ -3,13 +3,17 @@
 Source: Chapter 7 + six notebooks: `Chapter_07_Multi_Agent_(ADK_Gemini_Coordinator)`,
 `(ADK_Gemini_Sequential)`, `(ADK_Gemini_Parallel)`, `(ADK_Gemini_Loop)`,
 `(ADK_Gemini_AgentTool)`, `(CrewAI_Gemini)`.
+Labels: SOURCE = book text or its notebook (cited); DERIVED = ours;
+ILLUSTRATIVE = our code, not from the book. GT:L = line in
+`ground-truth/agentic_design_patterns.txt`.
 
-## Interaction models (book)
-Sequential handoff, parallel workstreams, debate/consensus, hierarchical
-delegation, expert teams, critic-reviewer. Rule of thumb: use when a task
-decomposes into sub-tasks needing distinct expertise, tools or stages.
+## Interaction models (SOURCE, GT:L4308–L4330; rule of thumb GT:L4949)
+Sequential handoffs, parallel processing, debate and consensus, hierarchical
+structures, expert teams, critic-reviewer. Rule of thumb: use when a task is
+too complex for a single agent and decomposes into sub-tasks needing
+distinct expertise or tools.
 
-## ADK building blocks
+## ADK building blocks (SOURCE APIs from the chapter's ADK examples; table DERIVED)
 | Construct | Behaviour | State handoff |
 |---|---|---|
 | `LlmAgent(sub_agents=[...])` | Coordinator; LLM-driven delegation | any |
@@ -20,6 +24,7 @@ decomposes into sub-tasks needing distinct expertise, tools or stages.
 | `BaseAgent._run_async_impl` | Custom non-LLM agent | yields `Event`s |
 
 ### Coordinator (hierarchical)
+Provenance: SOURCE — lines found verbatim in GT:L4612–L4655.
 ```python
 class TaskExecutor(BaseAgent):
     name: str = "TaskExecutor"
@@ -36,6 +41,7 @@ assert greeter.parent_agent == coordinator
 ```
 
 ### Sequential
+Provenance: SOURCE — lines found verbatim in GT:L4759–L4769.
 ```python
 step1 = Agent(name="Step1_Fetch", output_key="data")
 step2 = Agent(name="Step2_Process",
@@ -44,6 +50,7 @@ pipeline = SequentialAgent(name="MyPipeline", sub_agents=[step1, step2])
 ```
 
 ### Parallel
+Provenance: SOURCE (abridged) — condensed from GT:L4806–L4825; not verbatim.
 ```python
 weather_fetcher = Agent(name="weather_fetcher", model="gemini-2.0-flash-exp",
     instruction="Fetch the weather for the given location and return only the weather report.",
@@ -55,6 +62,7 @@ data_gatherer = ParallelAgent(name="data_gatherer", sub_agents=[weather_fetcher,
 ```
 
 ### Loop with condition checker
+Provenance: SOURCE (abridged) — condensed from GT:L4684–L4716; not verbatim.
 ```python
 class ConditionChecker(BaseAgent):
     name: str = "ConditionChecker"
@@ -71,6 +79,7 @@ poller = LoopAgent(name="StatusPoller", max_iterations=10, sub_agents=[process_s
 ```
 
 ### Agent as tool
+Provenance: SOURCE (abridged) — condensed from GT:L4889–L4923; not verbatim.
 ```python
 image_generator_agent = LlmAgent(name="ImageGen", model="gemini-2.0-flash",
     description="Generates an image based on a detailed text prompt.",
@@ -84,10 +93,13 @@ artist_agent = LlmAgent(name="Artist", model="gemini-2.0-flash",
     instruction="First, invent a creative and descriptive prompt for an image. Then, use the `ImageGen` tool to generate the image using your prompt.",
     tools=[image_tool])
 ```
-`AgentTool` passes the parent's argument as `input` to the child. Keep the
-action (the function tool) separate from the reasoning (the child agent).
+The book comments that the `AgentTool` description "is what the parent agent
+sees" (GT:L4906–L4907). How the parent's argument reaches the child is not
+shown (UNCERTAIN). DERIVED advice: keep the action (the function tool)
+separate from the reasoning (the child agent).
 
 ## CrewAI role/task crew
+Provenance: SOURCE (abridged) — condensed from GT:L4519–L4570 / `Chapter_07_Multi_Agent_(CrewAI_Gemini).ipynb`.
 ```python
 researcher = Agent(role="Senior Research Analyst",
     goal="Find and summarize the latest trends in AI.",
@@ -107,14 +119,14 @@ writing_task = Task(description="Write a 500-word blog post based on the researc
 Crew(agents=[researcher, writer], tasks=[research_task, writing_task], process=Process.sequential, llm=llm).kickoff()
 ```
 
-## Design checklist
+## Design checklist (DERIVED)
 - Coordinator instruction: "Delegate only. Do not answer directly."
 - Sub-agent `description` is the routing signal; keep them disjoint.
 - Name state keys once and reference them verbatim in instructions.
 - Loops: always set `max_iterations` and a checker that escalates.
 - Consider `a2a` when agents live on different frameworks/hosts.
 
-## Pattern variants
+## Pattern variants (DERIVED summary; book terms cited where present)
 - **Sequential handoff** — a fixed pipeline where each agent's output feeds the next; wins for staged work (research → write → edit).
 - **Parallel workstream** — independent agents run at once and their results are merged; wins when subtasks share no dependency.
 - **Hierarchical delegation** — a coordinator routes each request to the sub-agent holding the right tools; wins when the split is decided at runtime.
@@ -125,6 +137,7 @@ Crew(agents=[researcher, writer], tasks=[research_task, writing_task], process=P
 ## More prompt templates
 Coordinator instruction — name the delegate per case, do not describe the work:
 
+Provenance: SOURCE (abridged) — coordinator `description`/`instruction` from GT:L4640–L4644.
 ```
 description: A coordinator that can greet users and execute tasks.
 instruction: When asked to greet, delegate to the Greeter. When asked to
@@ -133,17 +146,18 @@ instruction: When asked to greet, delegate to the Greeter. When asked to
 
 `AgentTool` description — all the parent agent sees of the specialist:
 
+Provenance: SOURCE — lines found verbatim in GT:L4909–L4910.
 ```
 Use this tool to generate an image. The input should be a descriptive
 prompt of the desired image.
 ```
 
-## Framework notes
+## Framework notes (APIs SOURCE as cited above; advice DERIVED)
 - **LangChain / LangGraph** — no orchestration role here; it only supplies the model to CrewAI agents.
 - **Google ADK** — `SequentialAgent`, `ParallelAgent`, `LoopAgent`, `sub_agents`, and `AgentTool` cover the topologies; `output_key` writes to `session.state`, and `EventActions(escalate=True)` ends a loop.
 - **CrewAI** — roles come from `role` / `goal` / `backstory`; `Task.context` names the upstream tasks whose output is visible downstream.
 
-## Failure modes in depth
+## Failure modes in depth (DERIVED)
 - **Coordination overhead exceeds the benefit** — every hop costs a model call. If the subtasks need the same tools, give one agent all of them instead of splitting.
 - **Agents duplicate work or deadlock** — give each agent a distinct `output_key` so no two write the same slot, and bound every loop with `max_iterations` plus an explicit escalate condition.
 - **Context lost or distorted at handoff** — pass structured state (`state['data']`, `Task.context`) rather than re-summarizing prose at each hop, and instruct the receiver where to read it.

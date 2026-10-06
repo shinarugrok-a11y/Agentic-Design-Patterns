@@ -13,8 +13,8 @@ Use the file tools; do not guess file contents.
 ```
 
 ## Key APIs
-- Server: `FastMCP("name")`, `@mcp.tool()`, `mcp.run(transport='streamable-http')`.
-- ADK client: `MCPToolset(connection_params=StreamableHTTPServerParams(url=...))`.
+- Server (book): `mcp_server = FastMCP()`, `@mcp_server.tool`, `mcp_server.run(transport="http", port=8000)`.
+- ADK client (book): `MCPToolset(connection_params=HttpServerParameters(url=...))`.
 - Stdio: `StdioServerParameters(command='npx', args=[..., ABS_PATH])`, `tool_filter=[...]`.
 
 ## Pitfalls -> fixes
